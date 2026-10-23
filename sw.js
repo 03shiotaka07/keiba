@@ -1,6 +1,6 @@
 // 競馬収支手帳 Service Worker: アプリ本体をキャッシュしてオフラインでも開けるようにする
 // アプリを更新したら VERSION を変えると、端末側のキャッシュも入れ替わる
-const VERSION = 'v2';
+const VERSION = 'v3';
 const CACHE = 'keiba-techo-' + VERSION;
 const FILES = ['./', 'index.html', 'manifest.webmanifest', 'icon-192.png', 'icon-512.png', 'apple-touch-icon.png'];
 
