@@ -1,0 +1,1276 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="競馬収支手帳">
+<meta name="theme-color" content="#f5efe1">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<title>競馬収支手帳</title>
+<style>
+:root{
+  --paper:#f5efe1; --card:#fffdf7; --ink:#1d2540; --sub:#6d7080; --line:#e4dac3; --gold:#b08a3e;
+  --plus:#1f7a4d; --minus:#c2402d; --g1:#b3261e; --g2:#b7791f; --g3:#2f6690; --gj:#6b4c9a;
+  --serif:"Hiragino Mincho ProN","Yu Mincho","YuMincho","Noto Serif JP",serif;
+  --sans:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Hiragino Kaku Gothic ProN","Yu Gothic","Noto Sans JP",sans-serif;
+  --sat:env(safe-area-inset-top,0px); --sab:env(safe-area-inset-bottom,0px);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.5}
+body.lock{overflow:hidden}
+#app{max-width:520px;margin:0 auto;padding:calc(var(--sat) + 10px) 14px calc(86px + var(--sab));min-height:100vh}
+button{font:inherit;color:inherit;cursor:pointer}
+input,select,textarea{font:inherit;color:inherit}
+h1,h2,h3{margin:0;font-family:var(--serif)}
+.top{display:flex;align-items:flex-end;justify-content:space-between;padding:6px 2px 10px;border-bottom:2px double var(--ink);margin-bottom:14px}
+.top h1{font-size:22px;letter-spacing:.08em}
+.top .sub{font-size:12px;color:var(--sub)}
+.iconbtn{background:none;border:1px solid var(--line);border-radius:10px;width:38px;height:38px;font-size:18px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:12px;box-shadow:0 1px 0 rgba(29,37,64,.04)}
+.card h3{font-size:15px;margin-bottom:8px;letter-spacing:.05em}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.widget{border-radius:20px;padding:14px;background:var(--card);border:1px solid var(--line);position:relative;overflow:hidden;min-height:150px}
+.widget .wl{font-size:11px;color:var(--sub);letter-spacing:.08em}
+.widget.next{background:linear-gradient(160deg,#fffdf7 55%,#f1e7cc)}
+.widget .big{font-family:var(--serif);font-size:19px;line-height:1.25;margin:6px 0 4px;font-weight:700}
+.widget .when{font-size:12px;color:var(--sub)}
+.widget .cd{position:absolute;right:12px;bottom:10px;font-family:var(--serif);font-size:30px;font-weight:700;line-height:1}
+.widget .cd small{font-size:12px;margin-left:2px}
+.badge{display:inline-block;font-size:11px;font-weight:700;color:#fff;border-radius:6px;padding:1px 7px;vertical-align:middle;background:var(--sub)}
+.badge.G1{background:var(--g1)} .badge.G2{background:var(--g2)} .badge.G3{background:var(--g3)}
+.badge.J{background:var(--gj)} .badge.N{background:#4b5563}
+.pl{font-variant-numeric:tabular-nums;font-weight:700}
+.pl.p{color:var(--plus)} .pl.m{color:var(--minus)} .pl.z{color:var(--sub)}
+.kpi{font-family:var(--serif);font-size:28px;font-weight:700;margin-top:4px;line-height:1.15}
+.kv{display:flex;justify-content:space-between;font-size:13px;margin-top:6px;color:var(--sub)}
+.kv b{color:var(--ink)}
+.mini{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;text-align:center;font-size:12px}
+.mini .h{color:var(--sub);font-size:10px;padding-bottom:2px}
+.mini .d{height:34px;border-radius:8px;padding-top:3px;position:relative}
+.mini .d.today{outline:1.5px solid var(--ink)}
+.mini .d.has{background:#f3ebd6}
+.dots{display:flex;justify-content:center;gap:2px;margin-top:2px}
+.dot{width:6px;height:6px;border-radius:50%;background:var(--g3)}
+.dot.G1{background:var(--g1)} .dot.G2{background:var(--g2)} .dot.G3{background:var(--g3)} .dot.J{background:var(--gj)}
+.sun{color:var(--minus)} .sat{color:#2d5fa8}
+.rlist{margin-top:10px;border-top:1px dashed var(--line)}
+.rrow{display:flex;gap:8px;align-items:center;padding:9px 2px;border-bottom:1px dashed var(--line);cursor:pointer;width:100%;background:none;border-left:0;border-right:0;border-top:0;text-align:left}
+.rrow .dt{width:62px;font-size:12px;color:var(--sub);flex:none}
+.rrow .nm{flex:1;min-width:0;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rrow .tr{font-size:11px;color:var(--sub);flex:none}
+.rrow.past{opacity:.5}
+.seg{display:flex;background:#ece3cc;border-radius:10px;padding:3px;gap:3px;margin-bottom:10px}
+.seg button{flex:1;border:0;background:none;padding:6px 4px;border-radius:8px;font-size:13px}
+.seg button.on{background:var(--ink);color:#fff;font-weight:700}
+.nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.nav b{font-family:var(--serif);font-size:18px}
+.nav button{background:none;border:1px solid var(--line);border-radius:10px;width:38px;height:34px;font-size:16px}
+.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:3px}
+.cal .h{text-align:center;font-size:11px;color:var(--sub);padding:2px 0}
+.cal .c{min-height:62px;background:var(--card);border:1px solid var(--line);border-radius:9px;padding:3px 3px 2px;text-align:left;display:flex;flex-direction:column;gap:1px;position:relative}
+.cal .c.out{visibility:hidden}
+.cal .c.sel{outline:2px solid var(--ink);outline-offset:-1px}
+.cal .c.today .n{background:var(--ink);color:#fff;border-radius:50%;width:19px;height:19px;display:inline-flex;align-items:center;justify-content:center}
+.cal .n{font-size:11px;font-weight:700;height:19px}
+.cal .v{font-size:10px;font-weight:700;letter-spacing:-.02em;margin-top:auto;text-align:right;font-variant-numeric:tabular-nums}
+.cal .dots{justify-content:flex-start;margin:0}
+.rec{display:block;width:100%;text-align:left;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:11px 12px;margin-bottom:8px}
+.rec .t1{display:flex;gap:6px;align-items:center}
+.rec .t1 b{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-family:var(--serif);font-size:16px}
+.rec .t2{display:flex;justify-content:space-between;font-size:12px;color:var(--sub);margin-top:3px}
+.dayh{font-family:var(--serif);font-size:13px;color:var(--sub);margin:14px 2px 6px;border-bottom:1px solid var(--line);padding-bottom:2px}
+.search{width:100%;border:1px solid var(--line);background:var(--card);border-radius:10px;padding:9px 12px;margin-bottom:8px}
+.empty{color:var(--sub);text-align:center;padding:22px 8px;font-size:13px}
+.tabbar{position:fixed;left:0;right:0;bottom:0;background:rgba(245,239,225,.96);backdrop-filter:blur(8px);border-top:1px solid var(--line);display:flex;justify-content:center;padding-bottom:var(--sab);z-index:20}
+.tabbar .in{display:flex;width:100%;max-width:520px}
+.tabbar button{flex:1;background:none;border:0;padding:7px 0 6px;font-size:10px;color:var(--sub);display:flex;flex-direction:column;align-items:center;gap:2px}
+.tabbar button.on{color:var(--ink);font-weight:700}
+.tabbar svg{width:23px;height:23px;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.fab{position:fixed;right:max(16px,calc(50% - 244px));bottom:calc(72px + var(--sab));width:54px;height:54px;border-radius:50%;border:0;background:var(--ink);color:#fff;font-size:28px;box-shadow:0 6px 16px rgba(29,37,64,.3);z-index:19}
+.layer{position:fixed;inset:0;background:var(--paper);z-index:50;display:none;flex-direction:column}
+.layer.show{display:flex}
+#layer2{z-index:60}
+.sheet-head{display:flex;align-items:center;justify-content:space-between;padding:calc(var(--sat) + 8px) 12px 8px;border-bottom:2px double var(--ink);background:var(--paper)}
+.sheet-head b{font-family:var(--serif);font-size:17px}
+.sheet-head button{background:none;border:0;padding:8px 6px;font-size:15px}
+.sheet-head .primary{background:var(--ink);color:#fff;border-radius:10px;padding:8px 16px;font-weight:700}
+.sheet-body{flex:1;overflow-y:auto;padding:12px 14px calc(30px + var(--sab));max-width:520px;width:100%;margin:0 auto;-webkit-overflow-scrolling:touch}
+label.f{display:block;font-size:12px;color:var(--sub);margin-bottom:9px}
+label.f>input,label.f>select,label.f>textarea,.inp{display:block;width:100%;margin-top:3px;border:1px solid var(--line);background:#fff;border-radius:10px;padding:9px 10px;color:var(--ink);font-size:15px}
+textarea{resize:vertical;min-height:70px}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.btn{display:block;width:100%;border:1px solid var(--ink);background:none;border-radius:11px;padding:10px;font-weight:600;margin-bottom:8px;color:var(--ink)}
+.btn.fill{background:var(--ink);color:#fff}
+.btn.danger{border-color:var(--minus);color:var(--minus)}
+.btn.sm{display:inline-block;width:auto;padding:6px 12px;font-size:13px;margin:0 6px 6px 0}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0 10px}
+.chip{border:1px solid var(--line);background:#fff;border-radius:10px;padding:6px 11px;font-size:14px;min-width:42px;text-align:center}
+.chip.on{background:var(--ink);color:#fff;border-color:var(--ink);font-weight:700}
+.chip.dis{opacity:.3;pointer-events:none}
+.chip.nm{display:flex;flex-direction:column;align-items:center;line-height:1.15;padding:4px 6px;min-width:46px}
+.chip.nm i{font-style:normal;font-size:9px;opacity:.75;white-space:nowrap}
+.sl{font-size:12px;color:var(--sub);margin-top:6px}
+.tk{display:flex;gap:8px;align-items:center;border:1px solid var(--line);border-radius:11px;padding:9px 10px;margin-bottom:7px;background:#fff;width:100%;text-align:left}
+.tk .l{flex:1;min-width:0}
+.tk .l b{display:block;font-size:14px;overflow-wrap:anywhere}
+.tk .l span{font-size:12px;color:var(--sub)}
+.tag{display:inline-block;font-size:11px;border-radius:6px;padding:0 6px;border:1px solid var(--line);color:var(--sub)}
+.tag.hit{background:var(--plus);border-color:var(--plus);color:#fff}
+.tag.miss{background:#9a9aa5;border-color:#9a9aa5;color:#fff}
+.tag.refund{background:var(--gold);border-color:var(--gold);color:#fff}
+.x{background:none;border:0;color:var(--sub);font-size:18px;padding:4px 8px}
+.sum{display:flex;justify-content:space-between;font-size:13px;padding-top:6px;color:var(--sub)}
+.photos{display:flex;gap:8px;flex-wrap:wrap}
+.photos .ph{width:76px;height:76px;border-radius:10px;border:1px solid var(--line);background:#eee center/cover;position:relative}
+.photos .ph button{position:absolute;top:-6px;right:-6px;width:22px;height:22px;border-radius:50%;border:0;background:var(--ink);color:#fff;font-size:12px}
+.stat6{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:10px}
+.stat6 div{background:#f7f1de;border-radius:10px;padding:8px;text-align:center}
+.stat6 span{display:block;font-size:10px;color:var(--sub)}
+.stat6 b{font-size:14px;font-variant-numeric:tabular-nums}
+.bars .br{display:grid;grid-template-columns:62px 1fr 56px;gap:8px;align-items:center;padding:5px 0;font-size:13px}
+.bars .tr{height:14px;background:#efe6cf;border-radius:7px;position:relative;overflow:visible}
+.bars .tr i{position:absolute;left:0;top:0;bottom:0;border-radius:7px;background:var(--plus)}
+.bars .tr i.lo{background:var(--minus)}
+.bars .tr u{position:absolute;left:50%;top:-3px;bottom:-3px;border-left:1.5px dashed var(--ink);opacity:.55}
+.bars .sm{grid-column:2/4;font-size:11px;color:var(--sub);margin-top:-4px}
+.note{font-size:12px;color:var(--sub);line-height:1.6}
+.vid{position:relative;padding-top:56.25%;background:#000;border-radius:12px;overflow:hidden;margin-bottom:10px}
+.vid iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+.prog{height:8px;background:#e8dfc7;border-radius:4px;overflow:hidden;margin:8px 0}
+.prog i{display:block;height:100%;width:0;background:var(--ink);transition:width .2s}
+.pick-r{display:flex;gap:8px;align-items:center;width:100%;text-align:left;background:var(--card);border:1px solid var(--line);border-radius:11px;padding:9px 10px;margin-bottom:6px}
+.pick-r .dt{width:64px;font-size:12px;color:var(--sub);flex:none}
+.pick-r .nm{flex:1;font-weight:600;min-width:0}
+.pick-r .sb{font-size:11px;color:var(--sub);display:block;font-weight:400}
+#toast{position:fixed;left:50%;bottom:calc(90px + var(--sab));transform:translateX(-50%);background:var(--ink);color:#fff;padding:9px 16px;border-radius:20px;font-size:13px;z-index:100;opacity:0;pointer-events:none;transition:opacity .2s;max-width:90%;text-align:center}
+#toast.show{opacity:1}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div id="layer" class="layer"></div>
+<div id="layer2" class="layer"></div>
+<div id="toast"></div>
+<input type="file" id="fileAny" style="display:none">
+
+<script>
+'use strict';
+// ==PURE-START==
+/* ================= 定数 ================= */
+const TRACKS_JRA=['札幌','函館','福島','新潟','東京','中山','中京','京都','阪神','小倉','海外'];
+const GRADES=['','G1','G2','G3','J・G1','J・G2','J・G3','L','OP'];
+const TT={
+  '単勝':{k:1,ordered:false},'複勝':{k:1,ordered:false},
+  '枠連':{k:2,ordered:false,frame:true},'枠単':{k:2,ordered:true,frame:true},
+  '馬連':{k:2,ordered:false},'ワイド':{k:2,ordered:false},'馬単':{k:2,ordered:true},
+  '三連複':{k:3,ordered:false},'三連単':{k:3,ordered:true},
+  'その他':{k:1,ordered:false,manualOnly:true}
+};
+const TYPE_ORDER=['単勝','複勝','枠連','枠単','馬連','ワイド','馬単','三連複','三連単','その他'];
+const G_MAP={'1':'G1','2':'G2','3':'G3','J1':'J・G1','J2':'J・G2','J3':'J・G3'};
+const RAW=`
+01-04|3|中山金杯|中山|芝2000
+01-04|3|京都金杯|京都|芝1600
+01-11|3|フェアリーS|中山|芝1600
+01-12|3|シンザン記念|京都|芝1600
+01-18|3|京成杯|中山|芝2000
+01-18|2|日経新春杯|京都|芝2400
+01-24|3|小倉牝馬S|小倉|芝2000
+01-25|2|AJCC|中山|芝2200
+01-25|2|プロキオンS|京都|ダ1800
+02-01|3|根岸S|東京|ダ1400
+02-01|3|シルクロードS|京都|芝1200
+02-10|3|東京新聞杯|東京|芝1600
+02-10|3|きさらぎ賞|京都|芝1800
+02-14|3|クイーンC|東京|芝1600
+02-14|J3|小倉ジャンプS|小倉|障3390
+02-15|3|共同通信杯|東京|芝1800
+02-15|2|京都記念|京都|芝2200
+02-21|3|ダイヤモンドS|東京|芝3400
+02-21|3|阪急杯|京都|芝1400
+02-22|1|フェブラリーS|東京|ダ1600
+02-22|3|小倉大賞典|小倉|芝1800
+02-28|3|オーシャンS|中山|芝1200
+03-01|2|中山記念|中山|芝1800
+03-01|2|チューリップ賞|阪神|芝1600
+03-07|3|中山牝馬S|中山|芝1800
+03-07|2|フィリーズレビュー|阪神|芝1400
+03-08|2|弥生賞ディープインパクト記念|中山|芝2000
+03-14|J2|阪神スプリングジャンプ|阪神|障3900
+03-15|2|スプリングS|中山|芝1800
+03-15|2|金鯱賞|中京|芝2000
+03-21|3|フラワーC|中山|芝1800
+03-21|3|ファルコンS|中京|芝1400
+03-22|3|愛知杯|中京|芝1400
+03-22|2|阪神大賞典|阪神|芝3000
+03-28|2|日経賞|中山|芝2500
+03-28|3|毎日杯|阪神|芝1800
+03-29|1|高松宮記念|中京|芝1200
+03-29|3|マーチS|中山|ダ1800
+04-04|3|ダービー卿CT|中山|芝1600
+04-04|3|チャーチルダウンズC|阪神|芝1600
+04-05|1|大阪杯|阪神|芝2000
+04-11|2|ニュージーランドT|中山|芝1600
+04-11|2|阪神牝馬S|阪神|芝1600
+04-12|1|桜花賞|阪神|芝1600
+04-18|J1|中山グランドジャンプ|中山|障4260
+04-18|3|アンタレスS|阪神|ダ1800
+04-19|1|皐月賞|中山|芝2000
+04-19|3|福島牝馬S|福島|芝1800
+04-25|2|青葉賞|東京|芝2400
+04-26|2|フローラS|東京|芝2000
+04-26|2|マイラーズC|京都|芝1600
+05-02|2|京王杯SC|東京|芝1400
+05-02|3|ユニコーンS|京都|ダ1900
+05-03|1|天皇賞(春)|京都|芝3200
+05-09|3|エプソムC|東京|芝1800
+05-09|2|京都新聞杯|京都|芝2200
+05-10|1|NHKマイルC|東京|芝1600
+05-16|3|新潟大賞典|新潟|芝2000
+05-16|J2|京都ハイジャンプ|京都|障3930
+05-17|1|ヴィクトリアマイル|東京|芝1600
+05-23|3|平安S|京都|ダ1900
+05-24|1|オークス|東京|芝2400
+05-30|3|葵S|京都|芝1200
+05-31|1|日本ダービー|東京|芝2400
+05-31|2|目黒記念|東京|芝2500
+06-07|1|安田記念|東京|芝1600
+06-13|3|函館スプリントS|函館|芝1200
+06-13|J3|東京ジャンプS|東京|障3110
+06-14|1|宝塚記念|阪神|芝2200
+06-21|3|府中牝馬S|東京|芝1800
+06-21|3|しらさぎS|阪神|芝1600
+06-28|3|ラジオNIKKEI賞|福島|芝1800
+06-28|3|函館記念|函館|芝2000
+07-05|3|北九州記念|小倉|芝1200
+07-12|3|七夕賞|福島|芝2000
+07-19|3|函館2歳S|函館|芝1200
+07-19|3|小倉記念|小倉|芝2000
+07-26|3|関屋記念|新潟|芝1600
+07-26|3|東海S|中京|ダ1400
+08-02|3|アイビスSD|新潟|芝1000
+08-02|3|クイーンS|札幌|芝1800
+08-08|3|エルムS|札幌|ダ1700
+08-09|3|レパードS|新潟|ダ1800
+08-09|3|CBC賞|中京|芝1200
+08-15|J3|新潟ジャンプS|新潟|障3250
+08-16|2|札幌記念|札幌|芝2000
+08-16|3|中京記念|中京|芝1600
+08-23|3|新潟2歳S|新潟|芝1600
+08-23|3|キーンランドC|札幌|芝1200
+08-30|3|新潟記念|新潟|芝2000
+08-30|3|中京2歳S|中京|芝1400
+09-05|3|京成杯AH|中山|芝1600
+09-05|3|札幌2歳S|札幌|芝1800
+09-06|2|紫苑S|中山|芝2000
+09-06|2|セントウルS|阪神|芝1200
+09-12|3|チャレンジC|阪神|芝2000
+09-13|2|セントライト記念|中山|芝2200
+09-13|2|ローズS|阪神|芝1800
+09-19|J3|阪神ジャンプS|阪神|障3140
+09-20|2|オールカマー|中山|芝2200
+09-21|2|神戸新聞杯|阪神|芝2400
+09-26|3|シリウスS|阪神|ダ2000
+09-27|1|スプリンターズS|中山|芝1200
+10-04|2|毎日王冠|東京|芝1800
+10-04|2|京都大賞典|京都|芝2400
+10-10|3|サウジアラビアRC|東京|芝1600
+10-11|2|アイルランドT|東京|芝1800
+10-12|2|スワンS|京都|芝1400
+10-17|2|富士S|東京|芝1600
+10-18|J2|東京ハイジャンプ|東京|障3110
+10-18|1|秋華賞|京都|芝2000
+10-24|3|アルテミスS|東京|芝1600
+10-25|1|菊花賞|京都|芝3000
+10-31|3|ファンタジーS|京都|芝1400
+11-01|1|天皇賞(秋)|東京|芝2000
+11-07|2|京王杯2歳S|東京|芝1400
+11-07|J2|京都ジャンプS|京都|障3170
+11-08|2|アルゼンチン共和国杯|東京|芝2500
+11-08|3|みやこS|京都|ダ1800
+11-14|3|武蔵野S|東京|ダ1600
+11-14|2|デイリー杯2歳S|京都|芝1600
+11-15|1|エリザベス女王杯|京都|芝2200
+11-21|3|福島記念|福島|芝2000
+11-22|1|マイルCS|京都|芝1600
+11-23|2|東スポ杯2歳S|東京|芝1800
+11-28|3|京都2歳S|京都|芝2000
+11-29|1|ジャパンC|東京|芝2400
+11-29|3|京阪杯|京都|芝1200
+12-05|2|ステイヤーズS|中山|芝3600
+12-05|3|鳴尾記念|阪神|芝1800
+12-06|1|チャンピオンズC|中京|ダ1800
+12-12|3|中日新聞杯|中京|芝2000
+12-13|3|カペラS|中山|ダ1200
+12-13|1|阪神JF|阪神|芝1600
+12-19|3|ターコイズS|中山|芝1600
+12-20|1|朝日杯FS|阪神|芝1600
+12-26|1|ホープフルS|中山|芝2000
+12-26|2|阪神C|阪神|芝1400
+12-26|J1|中山大障害|中山|障4100
+12-27|1|有馬記念|中山|芝2500
+`;
+const RACES=RAW.trim().split('\n').map(l=>{const [md,g,name,track,dist]=l.split('|');return {date:'2026-'+md,grade:G_MAP[g],name,track,dist:dist+'m',kind:'JRA'};});
+const HOLIDAYS=new Set(['2026-01-01','2026-01-12','2026-02-11','2026-02-23','2026-03-20','2026-04-29','2026-05-03','2026-05-04','2026-05-05','2026-05-06','2026-07-20','2026-08-11','2026-09-21','2026-09-22','2026-09-23','2026-10-12','2026-11-03','2026-11-23',
+ '2027-01-01','2027-01-11','2027-02-11','2027-02-23','2027-03-21','2027-03-22','2027-04-29','2027-05-03','2027-05-04','2027-05-05','2027-07-19','2027-08-11','2027-09-20','2027-09-23','2027-10-11','2027-11-03','2027-11-23']);
+const WD=['日','月','火','水','木','金','土'];
+
+/* ================= 状態 ================= */
+let S={records:[],customRaces:[],settings:{}};
+
+/* ================= ユーティリティ ================= */
+const pad=n=>String(n).padStart(2,'0');
+const ymd=d=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+const todayStr=()=>ymd(new Date());
+const parseYmd=s=>{const [y,m,d]=s.split('-').map(Number);return new Date(y,m-1,d);};
+const mdw=s=>{const d=parseYmd(s);return `${d.getMonth()+1}/${d.getDate()}(${WD[d.getDay()]})`;};
+const fmtYen=n=>'¥'+Math.abs(Math.round(n)).toLocaleString('ja-JP');
+const fmtPL=n=>(n>0?'+':n<0?'−':'±')+fmtYen(n);
+const plCls=n=>n>0?'p':n<0?'m':'z';
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const gradeCls=g=>!g?'':g.startsWith('J・')?'J':g==='G1'||g==='G2'||g==='G3'?g:'N';
+const normT=s=>String(s||'').normalize('NFKC');
+const normName=s=>normT(s).replace(/\s+/g,'').replace(/ステークス/g,'S').replace(/カップ/g,'C').toUpperCase();
+const daysBetween=(a,b)=>Math.round((parseYmd(b)-parseYmd(a))/864e5);
+const isHolidayOrSun=s=>HOLIDAYS.has(s)||parseYmd(s).getDay()===0;
+
+function allRaces(){return RACES.concat((S.customRaces||[])).sort((a,b)=>a.date<b.date?-1:a.date>b.date?1:0);}
+
+/* ================= 組合せ・馬券計算 ================= */
+function combos(arr,k){const out=[];(function rec(s,cur){if(cur.length===k){out.push(cur.slice());return;}for(let i=s;i<arr.length;i++){cur.push(arr[i]);rec(i+1,cur);cur.pop();}})(0,[]);return out;}
+function perms(arr,k){const out=[],used=new Array(arr.length).fill(false);(function rec(cur){if(cur.length===k){out.push(cur.slice());return;}for(let i=0;i<arr.length;i++){if(used[i])continue;used[i]=true;cur.push(arr[i]);rec(cur);cur.pop();used[i]=false;}})([]);return out;}
+const uniq=a=>[...new Set(a)].sort((x,y)=>x-y);
+
+function enumTicket(tk){
+  const m=TT[tk.type]; if(!m) return {n:0,list:[]};
+  const k=m.k, ord=m.ordered;
+  if(tk.method==='手入力') return {n:Math.max(0,parseInt(tk.manualPoints,10)||0),list:null};
+  let list=[];
+  if(tk.method==='通常'){
+    const t=(tk.cols||[]).slice(0,k).map(c=>(c||[])[0]);
+    if(t.length<k||t.some(v=>v==null)) return {n:0,list:[]};
+    if(!m.frame&&new Set(t).size<k) return {n:0,list:[]};
+    list=[ord?t:t.slice().sort((a,b)=>a-b)];
+  }else if(tk.method==='ボックス'){
+    const Sx=uniq(tk.box||[]); list=ord?perms(Sx,k):combos(Sx,k);
+  }else if(tk.method==='フォーメーション'){
+    const cols=[];for(let i=0;i<k;i++)cols.push((tk.cols||[])[i]||[]);
+    const U=uniq([].concat(...cols));
+    const cand=ord?perms(U,k):combos(U,k);
+    const pp=perms([...Array(k).keys()],k);
+    list=cand.filter(t=>ord?t.every((v,i)=>cols[i].includes(v)):pp.some(p=>p.every((pi,i)=>cols[i].includes(t[pi]))));
+  }else if(tk.method==='ながし'){
+    const ax=uniq(tk.axis||[]); const pt=uniq((tk.partners||[]).filter(v=>!ax.includes(v)));
+    const a=ax.length; if(a<1||a>=k) return {n:0,list:[]};
+    const U=uniq(ax.concat(pt));
+    const cand=ord?perms(U,k):combos(U,k);
+    list=cand.filter(t=>ax.every(v=>t.includes(v))&&t.every(v=>ax.includes(v)||pt.includes(v)));
+    if(ord){
+      const pos=String(tk.axisPos||'multi');
+      if(a===1&&/^[1-3]$/.test(pos)) list=list.filter(t=>t[+pos-1]===ax[0]);
+      else if(a===2&&/^[1-3]{2}$/.test(pos)){const ps=pos.split('').map(x=>+x-1);list=list.filter(t=>ps.every(i=>ax.includes(t[i])));}
+    }
+  }
+  return {n:list.length,list};
+}
+function posLabel(tk,m){
+  if(!m.ordered) return '';
+  const p=String(tk.axisPos||'multi');
+  if(p==='multi') return '(マルチ)';
+  if(/^\d$/.test(p)) return `(${p}着)`;
+  return `(${p[0]}-${p[1]}着)`;
+}
+function ticketLabel(tk){
+  const m=TT[tk.type]; if(!m) return '';
+  const sep=m.ordered?'→':'-'; let body='';
+  if(tk.method==='手入力') body=tk.manualLabel||'';
+  else if(tk.method==='通常') body=(tk.cols||[]).slice(0,m.k).map(c=>(c||[])[0]!=null?c[0]:'?').join(sep);
+  else if(tk.method==='ボックス') body='BOX '+uniq(tk.box||[]).join(',');
+  else if(tk.method==='フォーメーション'){const a=[];for(let i=0;i<m.k;i++)a.push(uniq((tk.cols||[])[i]||[]).join(','));body='F '+a.join(sep);}
+  else body='軸'+uniq(tk.axis||[]).join(',')+posLabel(tk,m)+'→'+uniq(tk.partners||[]).join(',');
+  return `${tk.type} ${body}`.trim();
+}
+function finalizeTicket(tk){
+  const {n}=enumTicket(tk);
+  tk.unit=Math.max(100,Math.round((+tk.unit||100)/100)*100);
+  tk.points=n; tk.cost=n*tk.unit; tk.label=ticketLabel(tk);
+  if(tk.result==='miss') tk.payout=0;
+  tk.payout=Math.max(0,Math.round(+tk.payout||0));
+  return tk;
+}
+
+/* ================= 集計 ================= */
+const settled=t=>t.result==='hit'||t.result==='miss'||t.result==='refund';
+function aggregate(recs){
+  let cost=0,pay=0,hitT=0,missT=0,pending=0;const byType={};
+  for(const r of recs)for(const t of (r.tickets||[])){
+    if(!settled(t)){pending++;continue;}
+    const c=t.cost||0,p=t.payout||0;cost+=c;pay+=p;
+    if(t.result==='hit')hitT++;else if(t.result==='miss')missT++;
+    const b=byType[t.type]||(byType[t.type]={cost:0,pay:0,hit:0,n:0});
+    b.cost+=c;b.pay+=p;b.n++;if(t.result==='hit')b.hit++;
+  }
+  return {cost,pay,profit:pay-cost,roi:cost?pay/cost*100:null,hitRate:(hitT+missT)?hitT/(hitT+missT)*100:null,pending,hitT,missT,byType,races:recs.length};
+}
+function groupAgg(recs,keyFn){
+  const g={};for(const r of recs){const k=keyFn(r);(g[k]||(g[k]=[])).push(r);}
+  return Object.keys(g).map(k=>({key:k,...aggregate(g[k])}));
+}
+
+/* ================= 解析(OCR/貼り付けテキスト) ================= */
+function findRaceInText(text){
+  const t=normName(text);let best=null;
+  for(const r of allRaces()){const n=normName(r.name);if(n.length>=3&&t.includes(n)&&(!best||n.length>normName(best.name).length))best=r;}
+  return best;
+}
+function parseMeta(raw){
+  const t=normT(raw);const m={};
+  const race=findRaceInText(t);
+  if(race)Object.assign(m,{date:race.date,track:race.track,name:race.name,grade:race.grade,dist:race.dist});
+  let x=t.match(/(20\d{2})[\/年.\-](\d{1,2})[\/月.\-](\d{1,2})/);
+  if(x&&!m.date)m.date=`${x[1]}-${pad(+x[2])}-${pad(+x[3])}`;
+  else if(!m.date){x=t.match(/(\d{1,2})月\s*(\d{1,2})日/);if(x)m.date=`${new Date().getFullYear()}-${pad(+x[1])}-${pad(+x[2])}`;}
+  if(!m.track){const tr=TRACKS_JRA.find(n=>t.includes(n.replace(/\(.*\)/,'')));if(tr)m.track=tr;}
+  x=t.match(/(\d{1,2})\s*R/);if(x&&+x[1]>=1&&+x[1]<=12)m.raceNo=+x[1];
+  if(!m.dist){x=t.match(/(芝|ダート|ダ|障害|障)\s*(\d{3,4})\s*m?/);if(x)m.dist=(x[1][0]==='ダ'?'ダ':x[1][0]==='障'?'障':'芝')+x[2]+'m';}
+  if(!m.grade){x=t.match(/G(III|II|I)(?![A-Za-z])/);if(x)m.grade={I:'G1',II:'G2',III:'G3'}[x[1]];}
+  return m;
+}
+function parseRaceCard(raw){
+  const t=normT(raw).replace(/([ァ-ヶー・])[ \t]+(?=[ァ-ヶー・])/g,'$1');
+  const horses=[],seen=new Set();
+  for(const line of t.split(/\r?\n/)){
+    let m=line.match(/^\s*(\d{1,2})\s+(\d{1,2})\s+([ァ-ヶー・]{2,10})/),no=0,name='';
+    if(m){no=+m[2];name=m[3];}
+    else{m=line.match(/^\s*(\d{1,2})\s+([ァ-ヶー・]{2,10})/);if(m){no=+m[1];name=m[2];}}
+    if(name&&no>=1&&no<=18&&!seen.has(no)){seen.add(no);horses.push({no,name});}
+  }
+  horses.sort((a,b)=>a.no-b.no);
+  return {horses,meta:parseMeta(raw)};
+}
+function parseTickets(raw){
+  let t=normT(raw).replace(/(\d)\s*[ー‐‑‒–—―－−~〜]\s*(?=\d)/g,'$1-').replace(/(\d)\s*[→>]\s*(?=\d)/g,'$1-');
+  const meta=parseMeta(raw);
+  const re=/(単勝|複勝|枠連|枠単|馬連|馬単|ワイド|3連複|三連複|3連単|三連単)/g;
+  const hits=[...t.matchAll(re)];const tickets=[];
+  hits.forEach((h,i)=>{
+    const end=i+1<hits.length?hits[i+1].index:t.length;
+    const block=t.slice(h.index,end);
+    const type={'3連複':'三連複','3連単':'三連単'}[h[1]]||h[1];
+    const m=TT[type];
+    const hasBox=/ボックス|BOX/i.test(block),hasNaga=/流し|ながし|ナガシ/.test(block),hasForm=/フォーメ/.test(block);
+    let amount=0;
+    for(const a of block.replace(/払戻[^\d]{0,8}[\d,]+\s*円/g,' ').matchAll(/(\d{1,3}(?:,\d{3})+|\d{3,6})\s*円/g)){const v=+a[1].replace(/,/g,'');if(v>=100&&v%100===0&&v>amount)amount=v;}
+    const b2=block.replace(/[\d,]+\s*円/g,' ').replace(/\d{1,2}\s*R/g,' ').replace(/20\d{2}[\/年.\-]\d{1,2}[\/月.\-]\d{1,2}/g,' ').replace(/(単勝|複勝|枠連|枠単|馬連|馬単|ワイド|3連複|三連複|3連単|三連単)/,' ');
+    const seqs=[...b2.matchAll(/\d{1,2}(?:\s*-\s*\d{1,2})+/g)].map(x=>x[0].split(/\s*-\s*/).map(Number));
+    let nums;
+    if(seqs.length)nums=seqs[0];
+    else nums=[...b2.matchAll(/(?<![\d-])\d{1,2}(?![\d-])/g)].map(x=>+x[0]);
+    const lim=m.frame?8:18;
+    nums=nums.filter(n=>n>=1&&n<=lim).slice(0,18);
+    const d={type,method:'手入力',cols:[[],[],[]],box:[],axis:[],partners:[],axisN:1,axisPos:'multi',unit:100,manualLabel:'',manualPoints:1,result:'pending',payout:0};
+    if(hasBox&&nums.length>=m.k&&!m.frame){d.method='ボックス';d.box=uniq(nums);}
+    else if(!hasNaga&&!hasForm&&nums.length===m.k){d.method='通常';d.cols=nums.map(n=>[n]);while(d.cols.length<3)d.cols.push([]);}
+    else if(!hasNaga&&!hasForm&&m.k===1&&nums.length>1){d.method='ボックス';d.box=uniq(nums);}
+    else{d.method='手入力';d.manualLabel=((hasNaga||hasForm)?b2.replace(/\s+/g,' ').trim().slice(0,30):'')||(nums.length?nums.join('-'):'要確認');d.manualPoints=1;}
+    const n=enumTicket(d).n;
+    if(d.method==='手入力'){d.unit=amount||100;d.manualPoints=1;}
+    else if(amount&&n&&amount%(n*100)===0)d.unit=amount/n;
+    else if(amount){d.method='手入力';d.manualLabel=nums.join('-')||'要確認';d.manualPoints=1;d.unit=amount;}
+    tickets.push(finalizeTicket(d));
+  });
+  const pm=t.match(/払戻[^\d]{0,8}((?:\d{1,3}(?:,\d{3})+|\d+))\s*円/);
+  if(pm&&tickets.length===1){tickets[0].result='hit';tickets[0].payout=+pm[1].replace(/,/g,'');}
+  return {meta,tickets};
+}
+
+/* ===== 重賞日程の貼り付け解析 ===== */
+function parseSchedule(raw,defYear){
+  const text=normT(raw).replace(/https?:\/\/\S+/g,' ').replace(/[　\t ]/g,' ');
+  const TR=TRACKS_JRA.filter(t=>t!=='海外');
+  const WDC='日月火水木金土';
+  const dateRe=/(?:(20\d{2})\s*[\/年.\-]\s*)?(\d{1,2})\s*(?:月\s*(\d{1,2})\s*日?|[\/.]\s*(\d{1,2}))(?:\s*[(（]\s*(祝)?([日月火水木金土])?(?:曜日?)?(祝)?\s*[)）])?/;
+  const GSRC='(?<![A-Za-z])(J[・.]?)?G\\s?(III|II|I|[123])(?![A-Za-z])';
+  const gradeRe=new RegExp(GSRC),gradeReG=new RegExp(GSRC,'g');
+  const DSRC='(芝|ダート|ダ|障害|障)\\s*[・]?\\s*(\\d{1,2},\\d{3}|\\d{3,4})\\s*(?:m|メートル)?';
+  const distRe=new RegExp(DSRC),distReG=new RegExp(DSRC,'g');
+  const dropWord=/^(?:国際|指定|特指|混合|牝|牡|牝馬|馬齢|定量|別定|ハンデ|ハンデ戦|ハンデキャップ|定|別|オープン|[2-4]歳(?:以上)?(?:オープン|牝馬?)?|賞金\S*|本賞金\S*)$/;
+  const isTrackWord=t=>TR.includes(String(t).trim().replace(/競馬場$/,''));
+  const dropGroup=inner=>new RegExp(GSRC).test(inner)||/[芝ダ障]\s*[\d,]{3,}/.test(inner)||isTrackWord(inner)||dropWord.test(inner.trim());
+  let cur=null,lastY=null;const seen=new Set(),items=[];
+  for(const line0 of text.split(/\r?\n/)){
+    if(/^\s*[※＊*]/.test(line0))continue;
+    let line=line0;
+    const dm=dateRe.exec(line);
+    if(dm){
+      const y=dm[1]?+dm[1]:(lastY||+defYear);
+      const mo=+dm[2],d=+(dm[3]||dm[4]);
+      const dt=new Date(y,mo-1,d);
+      if(mo>=1&&mo<=12&&dt.getMonth()===mo-1&&dt.getDate()===d){
+        cur={y,mo,d,wd:dm[6]||null};
+        if(dm[1])lastY=y;
+        line=line.slice(0,dm.index)+' '+line.slice(dm.index+dm[0].length);
+      }
+    }
+    const gm=gradeRe.exec(line);
+    if(!gm||!cur)continue;
+    const grade=(gm[1]?'J・':'')+'G'+({I:'1',II:'2',III:'3'}[gm[2]]||gm[2]);
+    const dm2=distRe.exec(line);
+    let dist='';
+    if(dm2)dist=(dm2[1][0]==='ダ'?'ダ':dm2[1][0]==='障'?'障':'芝')+dm2[2].replace(',','')+'m';
+    const toks=line.split(/[\s,、，|\/（）()\[\]「」]+/).filter(Boolean);
+    let track='';for(const tk of toks)if(isTrackWord(tk))track=tk.replace(/競馬場$/,'');
+    let s=line.replace(/[(（]([^()（）]*)[)）]/g,(m,inner)=>dropGroup(inner)?' ':m);
+    s=s.replace(gradeReG,' ').replace(distReG,' ').replace(/[、,，|]/g,' ');
+    const name=s.split(/\s+/).map(t=>t.replace(/^[☆★■●◆▲▼◇◎○・\-–—]+/,'').replace(/^第\d+回/,'').replace(/[☆★■●◆▲▼]+$/,''))
+      .filter(t=>t&&!isTrackWord(t)&&!/^\d+R$/.test(t)&&!/^[\d,]+$/.test(t)&&!dropWord.test(t)&&!/^(?:芝|ダート|ダ|障害|障|内|外|右|左|回り)+$/.test(t))
+      .join('').replace(/ステークス/g,'S').replace(/カップ/g,'C');
+    if(name.length<2)continue;
+    const date=`${cur.y}-${pad(cur.mo)}-${pad(cur.d)}`;
+    const key=date+'|'+normName(name);
+    if(seen.has(key))continue;seen.add(key);
+    const flags=[];
+    if(!track)flags.push('track');
+    if(cur.wd&&cur.wd!==WDC[new Date(cur.y,cur.mo-1,cur.d).getDay()])flags.push('wd');
+    if(name.length>20)flags.push('long');
+    items.push({date,name,grade,track,dist,flags});
+  }
+  return items.sort((a,b)=>a.date<b.date?-1:a.date>b.date?1:0);
+}
+// ==PURE-END==
+
+/* ================= 永続化 ================= */
+const KEY='keibaTecho.v1';
+function load(){
+  try{const j=JSON.parse(localStorage.getItem(KEY));if(j&&Array.isArray(j.records))S=Object.assign({records:[],customRaces:[],settings:{}},j);}catch(e){}
+  S.settings=S.settings||{};S.customRaces=S.customRaces||[];
+}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){toast('保存できませんでした(容量不足の可能性)');}}
+const IDB={db:null,
+  open(){return new Promise((res,rej)=>{if(IDB.db)return res(IDB.db);if(!window.indexedDB)return rej(new Error('no idb'));const q=indexedDB.open('keibaTechoPhotos',1);q.onupgradeneeded=()=>q.result.createObjectStore('p');q.onsuccess=()=>{IDB.db=q.result;res(IDB.db);};q.onerror=()=>rej(q.error);});},
+  async put(k,v){const db=await IDB.open();return new Promise((res,rej)=>{const tx=db.transaction('p','readwrite');tx.objectStore('p').put(v,k);tx.oncomplete=()=>res();tx.onerror=()=>rej(tx.error);});},
+  async get(k){const db=await IDB.open();return new Promise((res,rej)=>{const q=db.transaction('p').objectStore('p').get(k);q.onsuccess=()=>res(q.result);q.onerror=()=>rej(q.error);});},
+  async del(k){const db=await IDB.open();return new Promise((res,rej)=>{const tx=db.transaction('p','readwrite');tx.objectStore('p').delete(k);tx.oncomplete=()=>res();tx.onerror=()=>rej(tx.error);});}
+};
+
+/* ================= UI 状態 ================= */
+const NOW=new Date();
+const UI={tab:'home',calY:NOW.getFullYear(),calM:NOW.getMonth()+1,calSel:todayStr(),listQ:'',
+  stat:{mode:'month',y:NOW.getFullYear(),m:NOW.getMonth()+1},};
+let F=null;   // 記録フォームの下書き
+let T=null;   // 馬券エディタの下書き
+let SC=null;  // 読み取りシートの状態
+const $=(s,el)=>(el||document).querySelector(s);
+let toastTimer;
+function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove('show'),2200);}
+const uid=()=>'r'+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+
+/* ================= アイコン・共通パーツ ================= */
+const ICON={
+  home:'<svg viewBox="0 0 24 24"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/></svg>',
+  list:'<svg viewBox="0 0 24 24"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 8h6M9 12h6M9 16h4"/></svg>',
+  cal:'<svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>',
+  stats:'<svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-8M22 20H2"/></svg>',
+  video:'<svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="M10 9.5v5l4.5-2.5z"/></svg>'
+};
+const gradeBadge=g=>g?`<span class="badge ${gradeCls(g)}">${esc(g)}</span>`:'';
+function tabbar(){
+  const tabs=[['home','ホーム'],['list','記録'],['cal','カレンダー'],['stats','実績'],['video','動画']];
+  return `<nav class="tabbar"><div class="in">${tabs.map(([k,l])=>`<button data-act="tab" data-v="${k}" class="${UI.tab===k?'on':''}">${ICON[k]}<span>${l}</span></button>`).join('')}</div></nav>`;
+}
+function plHTML(n,big){return `<span class="pl ${plCls(n)}">${fmtPL(n)}</span>`;}
+const roiTxt=a=>a.roi==null?'—':a.roi.toFixed(0)+'%';
+const hitTxt=a=>a.hitRate==null?'—':a.hitRate.toFixed(1)+'%';
+function recAgg(r){return aggregate([r]);}
+function recSummaryHTML(r){
+  const a=recAgg(r);
+  const pl=a.cost||a.pay?plHTML(a.profit):(a.pending?'<span class="pl z">結果待ち</span>':'<span class="pl z">—</span>');
+  return pl;
+}
+
+/* ================= ホーム ================= */
+function nextRace(){const t=todayStr();return allRaces().find(r=>r.date>=t);}
+function vHome(){
+  const t=todayStr(),y=NOW.getFullYear(),m=NOW.getMonth()+1;
+  const ym=`${y}-${pad(m)}`;
+  const monthRecs=S.records.filter(r=>r.date.startsWith(ym));
+  const a=aggregate(monthRecs);
+  const nr=nextRace();
+  const nrHTML=nr?`<button class="widget next" data-act="newRace" data-d="${nr.date}" data-n="${esc(nr.name)}" style="text-align:left">
+      <div class="wl">次の重賞</div>${gradeBadge(nr.grade)}
+      <div class="big">${esc(nr.name)}</div>
+      <div class="when">${mdw(nr.date)}<br>${esc(nr.track)} ${esc(nr.dist)}</div>
+      <div class="cd">${daysBetween(t,nr.date)===0?'今日':daysBetween(t,nr.date)}<small>${daysBetween(t,nr.date)===0?'':'日後'}</small></div></button>`
+    :`<div class="widget next"><div class="wl">次の重賞</div><div class="big">予定なし</div><div class="when">設定から重賞を追加できます</div></div>`;
+  const moHTML=`<div class="widget"><div class="wl">${m}月の収支</div>
+      <div class="kpi ${'pl '+plCls(a.profit)}">${fmtPL(a.profit)}</div>
+      <div class="kv"><span>回収率</span><b>${roiTxt(a)}</b></div>
+      <div class="kv"><span>購入</span><b>${fmtYen(a.cost)}</b></div>
+      <div class="kv"><span>払戻</span><b>${fmtYen(a.pay)}</b></div></div>`;
+  // 今月の重賞カレンダー
+  const first=new Date(y,m-1,1),dim=new Date(y,m,0).getDate();
+  const races=allRaces().filter(r=>r.date.startsWith(ym));
+  let cells='';
+  ['日','月','火','水','木','金','土'].forEach((w,i)=>cells+=`<div class="h ${i===0?'sun':i===6?'sat':''}">${w}</div>`);
+  for(let i=0;i<first.getDay();i++)cells+='<div></div>';
+  for(let d=1;d<=dim;d++){
+    const ds=`${ym}-${pad(d)}`,rs=races.filter(r=>r.date===ds);
+    const wd=new Date(y,m-1,d).getDay();
+    const cls=(HOLIDAYS.has(ds)||wd===0)?'sun':wd===6?'sat':'';
+    cells+=`<div class="d ${ds===t?'today':''} ${rs.length?'has':''}"><span class="${cls}">${d}</span><div class="dots">${rs.slice(0,3).map(r=>`<i class="dot ${gradeCls(r.grade)}"></i>`).join('')}</div></div>`;
+  }
+  const rows=races.map(r=>`<button class="rrow ${r.date<t?'past':''}" data-act="newRace" data-d="${r.date}" data-n="${esc(r.name)}"><span class="dt">${mdw(r.date)}</span><span class="nm">${esc(r.name)}</span>${gradeBadge(r.grade)}<span class="tr">${esc(r.track)}</span></button>`).join('');
+  const recent=S.records.slice().sort((x,y)=>x.date<y.date?1:x.date>y.date?-1:(y.created||0)-(x.created||0)).slice(0,4);
+  return `<div class="top"><div><h1>競馬収支手帳</h1><div class="sub">${y}年${m}月${NOW.getDate()}日(${WD[NOW.getDay()]})</div></div><button class="iconbtn" data-act="tab" data-v="settings" aria-label="設定">⚙</button></div>
+  <div class="grid2" style="margin-bottom:12px">${nrHTML}${moHTML}</div>
+  <div class="card"><h3>${m}月の重賞カレンダー</h3><div class="mini">${cells}</div>
+    <div class="rlist">${rows||'<div class="empty">この月の重賞はありません</div>'}</div></div>
+  <div class="card"><h3>最近の記録</h3>${recent.length?recent.map(r=>recRow(r)).join(''):'<div class="empty">右下の＋から最初のレースを記録しよう</div>'}
+    ${recent.length?'<button class="btn" data-act="tab" data-v="list" style="margin:4px 0 0">すべて見る</button>':''}</div>`;
+}
+function recRow(r){
+  return `<button class="rec" data-act="edit" data-id="${r.id}">
+    <div class="t1">${gradeBadge(r.grade)}<b>${esc(r.name||'(レース名なし)')}</b>${recSummaryHTML(r)}</div>
+    <div class="t2"><span>${mdw(r.date)} ${esc(r.track)}${r.raceNo?' '+r.raceNo+'R':''}</span><span>${(r.tickets||[]).length}点の馬券</span></div></button>`;
+}
+
+/* ================= 記録一覧 ================= */
+function vList(){
+  const q=normName(UI.listQ);
+  let recs=S.records.slice();
+  if(q)recs=recs.filter(r=>normName(r.name+r.track+r.memo).includes(q));
+  recs.sort((x,y)=>x.date<y.date?1:x.date>y.date?-1:(y.created||0)-(x.created||0));
+  let html='',cur='';
+  for(const r of recs){if(r.date!==cur){cur=r.date;html+=`<div class="dayh">${r.date.replace(/-/g,'/')} (${WD[parseYmd(r.date).getDay()]})</div>`;}html+=recRow(r);}
+  return `<div class="top"><div><h1>記録</h1><div class="sub">全${S.records.length}件</div></div></div>
+  <input class="search" data-act-input="listQ" placeholder="レース名・競馬場・メモで検索" value="${esc(UI.listQ)}">
+  ${html||'<div class="empty">記録がありません</div>'}`;
+}
+
+/* ================= カレンダー ================= */
+function vCal(){
+  const y=UI.calY,m=UI.calM,ym=`${y}-${pad(m)}`;
+  const first=new Date(y,m-1,1),dim=new Date(y,m,0).getDate();
+  const recs=S.records.filter(r=>r.date.startsWith(ym));
+  const byDay={};recs.forEach(r=>(byDay[r.date]||(byDay[r.date]=[])).push(r));
+  const races=allRaces().filter(r=>r.date.startsWith(ym));
+  const t=todayStr();
+  let cells='';
+  WD.forEach((w,i)=>cells+=`<div class="h ${i===0?'sun':i===6?'sat':''}">${w}</div>`);
+  for(let i=0;i<first.getDay();i++)cells+='<div class="c out"></div>';
+  for(let d=1;d<=dim;d++){
+    const ds=`${ym}-${pad(d)}`,wd=new Date(y,m-1,d).getDay();
+    const rs=races.filter(r=>r.date===ds),dr=byDay[ds]||[];
+    const a=aggregate(dr);
+    const cls=(HOLIDAYS.has(ds)||wd===0)?'sun':wd===6?'sat':'';
+    let v='';
+    if(dr.length){
+      if(a.cost||a.pay){const p=a.profit,ab=Math.abs(p);const s=ab>=10000?(ab/10000).toFixed(ab>=100000?0:1)+'万':ab.toLocaleString();v=`<span class="v pl ${plCls(p)}">${p>0?'+':p<0?'−':''}${s}</span>`;}
+      else v='<span class="v pl z">…</span>';
+    }
+    cells+=`<button class="c ${ds===UI.calSel?'sel':''} ${ds===t?'today':''}" data-act="calSel" data-d="${ds}"><span class="n ${cls}">${d}</span><div class="dots">${rs.slice(0,4).map(r=>`<i class="dot ${gradeCls(r.grade)}"></i>`).join('')}</div>${v}</button>`;
+  }
+  const am=aggregate(recs);
+  const sel=UI.calSel,selRecs=S.records.filter(r=>r.date===sel),selRaces=allRaces().filter(r=>r.date===sel);
+  const detail=`<div class="card"><h3>${mdw(sel)}</h3>
+    ${selRaces.length?`<div class="sl" style="margin-top:0">この日の重賞</div>${selRaces.map(r=>`<button class="rrow" data-act="newRace" data-d="${r.date}" data-n="${esc(r.name)}"><span class="nm">${esc(r.name)}</span>${gradeBadge(r.grade)}<span class="tr">${esc(r.track)} ${esc(r.dist)}</span></button>`).join('')}`:''}
+    <div style="margin-top:8px">${selRecs.length?selRecs.map(recRow).join(''):'<div class="empty" style="padding:10px">この日の記録はありません</div>'}</div>
+    <button class="btn fill" data-act="newOn" data-d="${sel}">この日に記録を追加</button></div>`;
+  return `<div class="top"><div><h1>カレンダー</h1><div class="sub">日ごとの収支</div></div></div>
+  <div class="nav"><button data-act="calPrev">‹</button><b>${y}年${m}月</b><button data-act="calNext">›</button></div>
+  <div class="cal">${cells}</div>
+  <div class="card" style="margin-top:12px"><div class="kv" style="margin:0"><span>${m}月の収支</span>${plHTML(am.profit)}</div>
+    <div class="kv"><span>回収率</span><b>${roiTxt(am)}</b></div><div class="kv"><span>購入 / 払戻</span><b>${fmtYen(am.cost)} / ${fmtYen(am.pay)}</b></div></div>
+  ${detail}`;
+}
+
+/* ================= 実績 ================= */
+function statRecs(){
+  const s=UI.stat;let recs=S.records;
+  if(s.mode==='month')recs=recs.filter(r=>r.date.startsWith(`${s.y}-${pad(s.m)}`));
+  else if(s.mode==='year')recs=recs.filter(r=>r.date.startsWith(`${s.y}-`));
+  return recs.sort((a,b)=>a.date<b.date?-1:a.date>b.date?1:(a.created||0)-(b.created||0));
+}
+function lineChart(vals,labels,w,h){
+  if(!vals.length)return '<div class="empty">データがありません</div>';
+  const pd={l:6,r:6,t:14,b:20},iw=w-pd.l-pd.r,ih=h-pd.t-pd.b;
+  const min=Math.min(0,...vals),max=Math.max(0,...vals),rng=(max-min)||1;
+  const X=i=>pd.l+(vals.length===1?iw/2:i*iw/(vals.length-1)),Y=v=>pd.t+(max-v)/rng*ih;
+  const pts=vals.map((v,i)=>X(i).toFixed(1)+','+Y(v).toFixed(1));
+  const last=vals[vals.length-1],col=last>=0?'var(--plus)':'var(--minus)';
+  const area=`M${X(0).toFixed(1)},${Y(0).toFixed(1)} L${pts.join(' L')} L${X(vals.length-1).toFixed(1)},${Y(0).toFixed(1)} Z`;
+  return `<svg viewBox="0 0 ${w} ${h}" width="100%" style="display:block"><path d="${area}" fill="${col}" opacity=".12"/>
+    <line x1="${pd.l}" x2="${w-pd.r}" y1="${Y(0)}" y2="${Y(0)}" stroke="var(--sub)" stroke-dasharray="3 3" stroke-width="1"/>
+    <polyline points="${pts.join(' ')}" fill="none" stroke="${col}" stroke-width="2" stroke-linejoin="round"/>
+    <circle cx="${X(vals.length-1)}" cy="${Y(last)}" r="3.5" fill="${col}"/>
+    <text x="${pd.l}" y="${h-5}" font-size="10" fill="var(--sub)">${esc(labels[0])}</text>
+    <text x="${w-pd.r}" y="${h-5}" font-size="10" fill="var(--sub)" text-anchor="end">${esc(labels[labels.length-1])}</text>
+    <text x="${w-pd.r}" y="10" font-size="11" font-weight="700" fill="${col}" text-anchor="end">${fmtPL(last)}</text></svg>`;
+}
+function monthBars(vals,w,h){
+  const pd={l:6,r:6,t:14,b:16},iw=w-pd.l-pd.r,ih=h-pd.t-pd.b;
+  const min=Math.min(0,...vals),max=Math.max(0,...vals),rng=(max-min)||1;
+  const Y=v=>pd.t+(max-v)/rng*ih,bw=iw/12;
+  let s=`<svg viewBox="0 0 ${w} ${h}" width="100%" style="display:block"><line x1="${pd.l}" x2="${w-pd.r}" y1="${Y(0)}" y2="${Y(0)}" stroke="var(--sub)" stroke-width="1"/>`;
+  vals.forEach((v,i)=>{const x=pd.l+i*bw+bw*.18,ww=bw*.64,y0=Y(0),y1=Y(v);
+    s+=`<rect x="${x.toFixed(1)}" y="${Math.min(y0,y1).toFixed(1)}" width="${ww.toFixed(1)}" height="${Math.max(Math.abs(y1-y0),v?1.5:0).toFixed(1)}" rx="2" fill="${v>=0?'var(--plus)':'var(--minus)'}"/>
+    <text x="${(x+ww/2).toFixed(1)}" y="${h-3}" font-size="9" fill="var(--sub)" text-anchor="middle">${i+1}</text>`;});
+  return s+'</svg>';
+}
+function barRows(items){
+  if(!items.length)return '<div class="empty">データがありません</div>';
+  return `<div class="bars">${items.map(it=>{const w=Math.min(100,(it.roi||0)/2);return `<div class="br"><span>${esc(it.key)}</span><div class="tr"><i class="${(it.roi||0)<100?'lo':''}" style="width:${w}%"></i><u></u></div><b style="text-align:right">${it.roi==null?'—':it.roi.toFixed(0)+'%'}</b>
+    <div class="sm">購入 ${fmtYen(it.cost)} ／ 払戻 ${fmtYen(it.pay)}${it.n!=null?' ／ '+it.n+'点':''}</div></div>`;}).join('')}</div>`;
+}
+function vStats(){
+  const s=UI.stat,recs=statRecs(),a=aggregate(recs);
+  const ttl=s.mode==='month'?`${s.y}年${s.m}月`:s.mode==='year'?`${s.y}年`:'通算';
+  const nav=s.mode==='all'?'':`<div class="nav"><button data-act="statPrev">‹</button><b>${ttl}</b><button data-act="statNext">›</button></div>`;
+  // 収支推移
+  const byDay={};recs.forEach(r=>{const p=recAgg(r).profit;byDay[r.date]=(byDay[r.date]||0)+p;});
+  const days=Object.keys(byDay).sort();let cum=0;const vals=days.map(d=>(cum+=byDay[d]));
+  const line=lineChart(vals,days.map(d=>d.slice(5).replace('-','/')),340,150);
+  // 券種別
+  const typeItems=TYPE_ORDER.filter(t=>a.byType[t]).map(t=>({key:t,...a.byType[t],roi:a.byType[t].cost?a.byType[t].pay/a.byType[t].cost*100:null}));
+  // 競馬場別
+  const trackItems=groupAgg(recs,r=>r.track||'不明').filter(x=>x.cost).sort((p,q)=>q.cost-p.cost).map(x=>({key:x.key,cost:x.cost,pay:x.pay,roi:x.roi,n:null}));
+  // 年表示: 月別
+  let monthly='';
+  if(s.mode==='year'){const mv=[];for(let i=1;i<=12;i++)mv.push(aggregate(recs.filter(r=>r.date.startsWith(`${s.y}-${pad(i)}`))).profit);monthly=`<div class="card"><h3>月別収支</h3>${monthBars(mv,340,130)}</div>`;}
+  return `<div class="top"><div><h1>実績</h1><div class="sub">収支と回収率</div></div></div>
+  <div class="seg">${[['month','月'],['year','年'],['all','通算']].map(([k,l])=>`<button data-act="statMode" data-v="${k}" class="${s.mode===k?'on':''}">${l}</button>`).join('')}</div>
+  ${nav}
+  <div class="card"><div class="wl" style="font-size:12px;color:var(--sub)">収支</div><div class="kpi pl ${plCls(a.profit)}">${fmtPL(a.profit)}</div>
+    <div class="stat6"><div><span>回収率</span><b>${roiTxt(a)}</b></div><div><span>的中率</span><b>${hitTxt(a)}</b></div><div><span>レース数</span><b>${a.races}</b></div>
+      <div><span>購入額</span><b>${fmtYen(a.cost)}</b></div><div><span>払戻額</span><b>${fmtYen(a.pay)}</b></div><div><span>結果待ち</span><b>${a.pending}点</b></div></div></div>
+  <div class="card"><h3>収支の推移</h3>${line}</div>
+  ${monthly}
+  <div class="card"><h3>券種別の回収率</h3>${barRows(typeItems)}<div class="note">点線が回収率100%。バーが線を越えていればプラスです。</div></div>
+  <div class="card"><h3>競馬場別の回収率</h3>${barRows(trackItems)}</div>`;
+}
+
+/* ================= 動画 ================= */
+const JRA_UPLOADS='UUj6AKkCWS6FJqf0o5wP45eQ';
+function vVideo(){
+  return `<div class="top"><div><h1>公式動画</h1><div class="sub">JRA公式チャンネル</div></div></div>
+  <div class="vid"><iframe src="https://www.youtube.com/embed/videoseries?list=${JRA_UPLOADS}" title="JRA公式チャンネル" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe></div>
+  <a class="btn" style="text-decoration:none;text-align:center" href="https://www.youtube.com/@jraofficial" target="_blank" rel="noopener">YouTubeでJRA公式チャンネルを開く</a>
+  <div class="note">※再生できない場合は、上のボタンからYouTubeで開いてください。HTMLファイルを直接開いている場合(file://)は、YouTubeの埋め込みが制限されることがあります。https のURLに置くと安定します。</div>`;
+}
+
+/* ================= 設定 ================= */
+function vSettings(){
+  const cr=S.customRaces||[];
+  return `<div class="top"><div><h1>設定</h1><div class="sub">データの管理</div></div><button class="iconbtn" data-act="tab" data-v="home" aria-label="戻る">✕</button></div>
+  <div class="card"><h3>バックアップ</h3>
+    <button class="btn" data-act="exportJson">バックアップを書き出す(JSON)</button>
+    <button class="btn" data-act="exportJsonPhoto">写真も含めて書き出す</button>
+    <button class="btn" data-act="importJson">バックアップを読み込む</button>
+    <button class="btn" data-act="exportCsv">CSVで書き出す</button>
+    <div class="note">記録はこの端末のブラウザに保存されます。ブラウザのデータ削除や機種変更に備えて、ときどき書き出してください。</div></div>
+  ${siCard()}
+  <div class="card"><h3>重賞を1件追加</h3>
+    <div class="note" style="margin-bottom:8px">登録済みは2026年のJRA重賞です。1件ずつ足したいときはここから。</div>
+    <div class="row2"><label class="f">日付<input type="date" id="crDate"></label><label class="f">グレード<select id="crGrade">${GRADES.filter(Boolean).map(g=>`<option>${g}</option>`).join('')}</select></label></div>
+    <label class="f">レース名<input id="crName"></label>
+    <div class="row2"><label class="f">競馬場<select id="crTrack">${trackOptions('')}</select></label><label class="f">コース<input id="crDist" placeholder="ダ1800m"></label></div>
+    <button class="btn fill" data-act="addCustom">追加する</button>
+    ${cr.length?`<details style="margin-top:10px"><summary class="sl" style="cursor:pointer">追加した重賞(${cr.length}件)を表示</summary>${cr.map((r,i)=>`<div class="tk"><div class="l"><b>${esc(r.name)} ${gradeBadge(r.grade)}</b><span>${r.date.replace(/-/g,'/')} ${esc(r.track)} ${esc(r.dist)}</span></div><button class="x" data-act="delCustom" data-i="${i}">✕</button></div>`).join('')}<button class="btn danger" data-act="delCustomAll" style="margin-top:6px">追加した重賞をすべて削除</button></details>`:''}</div>
+  <div class="card"><h3>データを消去</h3><button class="btn danger" data-act="wipe">すべての記録を削除する</button></div>
+  <div class="note" style="text-align:center;padding:6px 0 20px">競馬収支手帳 — このアプリは予想や馬券の購入は行いません。<br>馬券の購入は20歳になってから、無理のない範囲で。</div>`;
+}
+
+/* ================= 重賞日程の取り込み ================= */
+const SI={text:'',year:'',items:null,sel:{},msg:''};
+function siYear(){
+  if(+SI.year)return +SI.year;
+  const rs=allRaces();const last=rs[rs.length-1].date;const y=+last.slice(0,4);
+  return (+last.slice(5,7)===12&&+last.slice(8,10)>=20)?y+1:y;  // 年末までそろっていれば翌年、途中までなら同じ年
+}
+function siParse(){
+  SI.items=parseSchedule(SI.text,siYear());
+  SI.sel={};SI.items.forEach((it,i)=>{SI.sel[i]=!it.flags.length;});
+  SI.msg=SI.items.length?'':'重賞(G1〜G3)の行を見つけられませんでした。日付・レース名・グレード(GI/GII/GIII)が1行にそろった部分を貼り付けてください。';
+  render();
+}
+function siApply(){
+  if(!SI.items)return;
+  let add=0,upd=0,skip=0;
+  SI.items.forEach((it,i)=>{
+    if(!SI.sel[i])return;
+    const nn=normName(it.name);
+    if(RACES.some(r=>r.date===it.date&&normName(r.name)===nn)){skip++;return;}
+    const ex=S.customRaces.find(r=>r.date===it.date&&normName(r.name)===nn);
+    const rec={date:it.date,grade:it.grade,name:it.name,track:it.track,dist:it.dist,kind:'JRA',custom:true};
+    if(ex){if(ex.grade!==rec.grade||ex.track!==rec.track||ex.dist!==rec.dist){Object.assign(ex,rec);upd++;}else skip++;}
+    else{S.customRaces.push(rec);add++;}
+  });
+  save();SI.items=null;SI.text='';SI.msg=`追加${add}件 / 更新${upd}件 / 変更なし${skip}件`;render();toast(SI.msg);
+}
+function siFile(){
+  pickFile('.txt,.csv,.tsv,text/plain,text/csv',async f=>{
+    const buf=await f.arrayBuffer();let t;
+    try{t=new TextDecoder('utf-8',{fatal:true}).decode(buf);}catch(e){try{t=new TextDecoder('shift_jis').decode(buf);}catch(e2){toast('文字コードを読み取れませんでした');return;}}
+    SI.text=t;SI.items=null;render();
+  });
+}
+function siCard(){
+  const it=SI.items;let prev='';
+  if(it&&it.length){
+    const ok=it.filter(x=>!x.flags.length).length,nt=it.filter(x=>x.flags.includes('track')).length,nw=it.filter(x=>x.flags.includes('wd')).length,nl=it.filter(x=>x.flags.includes('long')).length;
+    const chosen=Object.values(SI.sel).filter(Boolean).length;
+    prev=`<div class="sl">${it.length}件を見つけました(問題なし${ok}${nt?` / 競馬場不明${nt}`:''}${nw?` / 曜日が合わない${nw}`:''}${nl?` / 名前が長い${nl}`:''})。チェックした行だけ取り込みます。</div>
+      <div style="margin-top:6px">${it.map((x,i)=>`<button class="tk" data-act="siToggle" data-i="${i}"><span style="font-size:18px">${SI.sel[i]?'☑':'☐'}</span><div class="l"><b>${esc(x.name)} ${gradeBadge(x.grade)}</b><span>${mdw(x.date)} ${esc(x.track||'競馬場不明')} ${esc(x.dist)}${x.flags.includes('wd')?' ・曜日が合いません(年の指定を確認)':''}${x.flags.includes('long')?' ・名前が長い(説明文かも)':''}</span></div></button>`).join('')}</div>
+      <button class="btn fill" data-act="siApply" ${chosen?'':'disabled style="opacity:.4"'}>チェックした${chosen}件を取り込む</button>
+      <div class="note">同じ日・同じレース名がすでにあれば、新しい内容で更新します(格付けの変更などに対応)。海外レースは競馬場が不明になるので、最初はチェックが外れます。</div>`;
+  }
+  return `<div class="card"><h3>重賞日程を取り込む</h3>
+    <div class="note" style="margin-bottom:8px">JRAのサイトの重賞日程ページ(またはPDF)を開き、日程の部分をコピーして下に貼り付けます。2027年の重賞一覧はJRAの発表後(11月中旬の予定)に取り込めます。</div>
+    <label class="f">日付に年がないときの年<input class="inp" type="number" inputmode="numeric" data-act-input="siYear" value="${siYear()}"></label>
+    <textarea id="siText" data-act-input="siText" style="min-height:110px" placeholder="例:&#10;1/4(月) 中山金杯 GIII 中山 芝2000m">${esc(SI.text)}</textarea>
+    <div style="margin-top:8px"><button class="btn sm" data-act="siFile">ファイルから読み込む</button><button class="btn sm fill" data-act="siParse">解析する</button></div>
+    ${SI.msg?`<div class="note" style="color:var(--ink)">${esc(SI.msg)}</div>`:''}${prev}</div>`;
+}
+function trackOptions(sel){
+  return TRACKS_JRA.map(t=>`<option ${t===sel?'selected':''}>${t}</option>`).join('');
+}
+
+/* ================= 描画 ================= */
+function render(){
+  const fn={home:vHome,list:vList,cal:vCal,stats:vStats,video:vVideo,settings:vSettings}[UI.tab]||vHome;
+  const y=window.scrollY;
+  $('#app').innerHTML=fn()+(UI.tab==='settings'?tabbar():tabbar())+(['home','list','cal'].includes(UI.tab)?'<button class="fab" data-act="new" aria-label="記録を追加">＋</button>':'');
+  window.scrollTo(0,y);
+}
+
+/* ================= 記録フォーム ================= */
+function blankForm(p){
+  p=p||{};
+  return {id:null,date:p.date||todayStr(),track:p.track||'東京',raceNo:p.raceNo||'',name:p.name||'',grade:p.grade||'',dist:p.dist||'',memo:'',horses:[],tickets:[],photoIds:[],created:Date.now()};
+}
+function openForm(rec,preset){
+  F=rec?JSON.parse(JSON.stringify(rec)):blankForm(preset);
+  F._isNew=!rec;
+  showLayer('layer');renderForm();
+}
+function showLayer(id){const el=$('#'+id);el.classList.add('show');document.body.classList.add('lock');}
+function hideLayer(id){const el=$('#'+id);el.classList.remove('show');el.innerHTML='';if(!$('#layer.show')&&!$('#layer2.show'))document.body.classList.remove('lock');}
+function ticketRow(t,i){
+  const rtag={pending:'<span class="tag">結果待ち</span>',hit:'<span class="tag hit">的中</span>',miss:'<span class="tag miss">ハズレ</span>',refund:'<span class="tag refund">返還</span>'}[t.result];
+  const pl=settled(t)?plHTML((t.payout||0)-(t.cost||0)):'';
+  return `<div class="tk" style="padding:0"><button class="tk" style="border:0;margin:0;flex:1" data-act="editTicket" data-i="${i}"><div class="l"><b>${esc(t.label)}</b><span>${t.points}点 × ${fmtYen(t.unit)} = ${fmtYen(t.cost)}${t.result==='hit'?' → 払戻 '+fmtYen(t.payout):''}</span></div>${rtag}${pl}</button><button class="x" data-act="delTicket" data-i="${i}">✕</button></div>`;
+}
+function renderForm(){
+  const L=$('#layer');const sc=$('.sheet-body',L);const st=sc?sc.scrollTop:0;
+  const a=aggregate([F]);
+  L.innerHTML=`<div class="sheet-head"><button data-act="closeForm">閉じる</button><b>${F._isNew?'レースを記録':'記録を編集'}</b><button class="primary" data-act="saveForm">保存</button></div>
+  <div class="sheet-body">
+   <div class="card">
+     <button class="btn" data-act="pickRace">★ 重賞(G1〜G3)から選ぶ</button>
+     <div class="row2"><label class="f">日付<input type="date" data-f="date" value="${esc(F.date)}"></label>
+       <label class="f">競馬場<select data-f="track">${trackOptions(F.track)}</select></label></div>
+     <div class="row2"><label class="f">レース番号<input type="number" inputmode="numeric" min="1" max="12" data-f="raceNo" value="${esc(F.raceNo)}" placeholder="11"></label>
+       <label class="f">グレード<select data-f="grade">${GRADES.map(g=>`<option value="${g}" ${g===F.grade?'selected':''}>${g||'なし'}</option>`).join('')}</select></label></div>
+     <label class="f">レース名<input data-f="name" value="${esc(F.name)}" placeholder="例: 天皇賞(秋)"></label>
+     <label class="f" style="margin-bottom:0">コース<input data-f="dist" value="${esc(F.dist)}" placeholder="例: 芝2000m"></label>
+   </div>
+   <div class="card"><h3>写真から読み取る</h3>
+     <button class="btn" data-act="scanCard">出馬表を読み取る(写真・テキスト)</button>
+     <button class="btn" data-act="scanTicket">馬券・ネット投票画面を読み取る</button>
+     <div class="note">${F.horses.length?`出馬表 ${F.horses.length}頭を取り込み済み。馬券の馬番に馬名が表示されます。`:'出馬表を先に読み取ると、馬券入力で馬名が見えて選びやすくなります。'}</div></div>
+   <div class="card"><h3>馬券</h3>
+     ${F.tickets.map(ticketRow).join('')||'<div class="empty" style="padding:10px">馬券はまだありません</div>'}
+     <button class="btn fill" data-act="addTicket">＋ 馬券を追加</button>
+     <div class="sum"><span>購入 ${fmtYen(a.cost)}</span><span>払戻 ${fmtYen(a.pay)}</span><span>${a.cost||a.pay?plHTML(a.profit):''}</span></div></div>
+   <div class="card"><h3>写真</h3><div class="photos">${F.photoIds.map(id=>`<div class="ph" data-pid="${id}"><button data-act="delPhoto" data-id="${id}">✕</button></div>`).join('')}</div>
+     <button class="btn sm" style="margin-top:8px" data-act="addPhoto">写真を追加</button><span class="note">馬券や出馬表を保存しておけます</span></div>
+   <div class="card"><label class="f" style="margin:0">メモ<textarea data-f="memo" placeholder="予想の根拠や反省など">${esc(F.memo)}</textarea></label></div>
+   ${F._isNew?'':'<button class="btn danger" data-act="delRecord">この記録を削除</button>'}
+  </div>`;
+  const nb=$('.sheet-body',L);if(nb)nb.scrollTop=st;
+  hydratePhotos(L);
+}
+async function hydratePhotos(root){
+  for(const el of root.querySelectorAll('.ph[data-pid]')){
+    try{const b=await IDB.get(el.dataset.pid);if(b)el.style.backgroundImage=`url(${URL.createObjectURL(b)})`;}catch(e){}
+  }
+}
+async function fileToCanvas(file,max){
+  let bmp;
+  try{bmp=await createImageBitmap(file);}catch(e){
+    bmp=await new Promise((res,rej)=>{const im=new Image();im.onload=()=>res(im);im.onerror=rej;im.src=URL.createObjectURL(file);});
+  }
+  const w=bmp.width||bmp.naturalWidth,h=bmp.height||bmp.naturalHeight,sc=Math.min(1,max/Math.max(w,h));
+  const c=document.createElement('canvas');c.width=Math.round(w*sc);c.height=Math.round(h*sc);
+  c.getContext('2d').drawImage(bmp,0,0,c.width,c.height);return c;
+}
+const toBlob=(c,q)=>new Promise(r=>c.toBlob(r,'image/jpeg',q));
+function pickFile(accept,cb){
+  const el=$('#fileAny');el.value='';el.accept=accept;
+  el.onchange=()=>{const f=el.files&&el.files[0];if(f)cb(f);};el.click();
+}
+
+/* ================= 馬券エディタ ================= */
+function newTicket(){return {id:null,type:'馬連',method:'通常',cols:[[],[],[]],box:[],axis:[],partners:[],axisN:1,axisPos:'multi',unit:100,manualLabel:'',manualPoints:1,result:'pending',payout:0,odds:''};}
+const methodsFor=type=>{const m=TT[type];if(m.manualOnly)return ['手入力'];return m.k===1?['通常','ボックス','手入力']:m.frame?['通常','手入力']:['通常','ボックス','フォーメーション','ながし','手入力'];};
+const methodLabel=(type,mt)=>mt==='ボックス'&&TT[type].k===1?'まとめ買い':mt==='ボックス'?'ボックス':mt;
+function maxHorse(){return F&&F.horses.length?Math.max(...F.horses.map(h=>h.no),8):18;}
+function horseName(n){const h=F&&F.horses.find(x=>x.no===n);return h?h.name:'';}
+function chipRow(group,cur,disabled,frame){
+  const max=frame?8:maxHorse(),out=[];
+  for(let n=1;n<=max;n++){
+    const nm=frame?'':horseName(n);
+    out.push(`<button class="chip ${nm?'nm':''} ${cur.includes(n)?'on':''} ${disabled&&disabled.includes(n)?'dis':''}" data-act="tkPick" data-g="${group}" data-n="${n}">${nm?`<b>${n}</b><i>${esc(nm.slice(0,4))}</i>`:n}</button>`);
+  }
+  return `<div class="chips">${out.join('')}</div>`;
+}
+function openTicket(idx){
+  T=idx==null?newTicket():Object.assign(newTicket(),JSON.parse(JSON.stringify(F.tickets[idx])));
+  T._idx=idx;T.odds='';
+  if(!T.cols)T.cols=[[],[],[]];
+  showLayer('layer2');renderTicket();
+}
+function renderTicket(){
+  const L=$('#layer2');const sc=$('.sheet-body',L);const st=sc?sc.scrollTop:0;
+  const m=TT[T.type],k=m.k,ord=m.ordered;
+  const {n}=enumTicket(T);const unit=Math.max(100,+T.unit||100);const cost=n*unit;
+  const methods=methodsFor(T.type);
+  let sel='';
+  if(T.method==='通常'){
+    for(let i=0;i<k;i++){
+      const lab=k===1?'馬番':ord?`${i+1}着`:`${i+1}頭目`;
+      sel+=`<div class="sl">${lab}</div>`+chipRow('cols:'+i,T.cols[i]||[],null,m.frame);
+    }
+  }else if(T.method==='ボックス'){
+    sel+=`<div class="sl">${k===1?'買う馬番(複数選択)':'ボックスにする馬番(複数選択)'}</div>`+chipRow('box',T.box,null,m.frame);
+  }else if(T.method==='フォーメーション'){
+    for(let i=0;i<k;i++)sel+=`<div class="sl">${ord?`${i+1}着`:`${i+1}列目`}</div>`+chipRow('cols:'+i,T.cols[i]||[],null,m.frame);
+  }else if(T.method==='ながし'){
+    if(k===3)sel+=`<div class="sl">軸の頭数</div><div class="chips">${[1,2].map(v=>`<button class="chip ${T.axisN===v?'on':''}" data-act="axisN" data-v="${v}">${v}頭軸</button>`).join('')}</div>`;
+    if(ord){
+      const opts=T.axisN===2?[['12','1-2着'],['13','1-3着'],['23','2-3着'],['multi','マルチ']]:[...Array(k).keys()].map(i=>[String(i+1),`${i+1}着`]).concat([['multi','マルチ']]);
+      sel+=`<div class="sl">軸の着順</div><div class="chips">${opts.map(([v,l])=>`<button class="chip ${String(T.axisPos)===v?'on':''}" data-act="axisPos" data-v="${v}">${l}</button>`).join('')}</div>`;
+    }
+    sel+=`<div class="sl">軸(${T.axisN}頭)</div>`+chipRow('axis',T.axis,null,m.frame);
+    sel+=`<div class="sl">相手</div>`+chipRow('partners',T.partners,T.axis,m.frame);
+  }else{
+    sel+=`<label class="f">買い目(メモ)<input class="inp" data-tf="manualLabel" value="${esc(T.manualLabel)}" placeholder="例: 3-5-7 / 1-2,4"></label>
+      <label class="f">点数<input class="inp" type="number" inputmode="numeric" min="1" data-tf="manualPoints" value="${esc(T.manualPoints)}"></label>`;
+  }
+  const rb=[['pending','結果待ち'],['hit','的中'],['miss','ハズレ'],['refund','返還']];
+  L.innerHTML=`<div class="sheet-head"><button data-act="closeTicket">キャンセル</button><b>馬券を入力</b><button class="primary" data-act="saveTicket">決定</button></div>
+  <div class="sheet-body">
+   <div class="card"><div class="sl" style="margin-top:0">券種</div><div class="chips">${TYPE_ORDER.map(t=>`<button class="chip ${T.type===t?'on':''}" data-act="tkType" data-v="${t}">${t}</button>`).join('')}</div>
+    <div class="sl">買い方</div><div class="chips">${methods.map(mt=>`<button class="chip ${T.method===mt?'on':''}" data-act="tkMethod" data-v="${mt}">${methodLabel(T.type,mt)}</button>`).join('')}</div></div>
+   <div class="card">${sel}</div>
+   <div class="card"><div class="sl" style="margin-top:0">1点あたりの金額</div>
+     <div style="display:flex;gap:8px;align-items:center"><button class="chip" data-act="unitDn">−100</button>
+       <input class="inp" style="margin:0;text-align:center" type="number" inputmode="numeric" step="100" min="100" data-tf="unit" value="${unit}">
+       <button class="chip" data-act="unitUp">＋100</button></div>
+     <div class="sum" style="font-size:15px;color:var(--ink)"><span>${n}点 × ${fmtYen(unit)}</span><b id="tkCost">購入額 ${fmtYen(cost)}</b></div>
+     ${n===0?'<div class="note" style="color:var(--minus)">馬番を選ぶと点数が自動で計算されます</div>':''}</div>
+   <div class="card"><div class="sl" style="margin-top:0">結果</div>
+     <div class="seg">${rb.map(([v,l])=>`<button data-act="tkResult" data-v="${v}" class="${T.result===v?'on':''}">${l}</button>`).join('')}</div>
+     ${T.result==='hit'?`<label class="f">オッズから計算(1点が的中した場合)<input class="inp" type="number" inputmode="decimal" step="0.1" data-tf="odds" value="${esc(T.odds)}" placeholder="例: 12.4"></label>
+       <label class="f" style="margin:0">払戻金(合計)<input class="inp" id="tkPay" type="number" inputmode="numeric" data-tf="payout" value="${T.payout||''}" placeholder="払戻金の合計"></label>`:''}
+     ${T.result==='refund'?`<label class="f" style="margin:0">返還金<input class="inp" id="tkPay" type="number" inputmode="numeric" data-tf="payout" value="${T.payout||cost||''}"></label>`:''}</div>
+  </div>`;
+  const nb=$('.sheet-body',L);if(nb)nb.scrollTop=st;
+}
+function resetSel(){T.cols=[[],[],[]];T.box=[];T.axis=[];T.partners=[];T.axisN=1;T.axisPos='multi';}
+function tkPick(g,n){
+  const m=TT[T.type];
+  if(g.startsWith('cols:')){
+    const i=+g.slice(5);const cur=T.cols[i]||[];
+    if(T.method==='通常'){T.cols[i]=cur[0]===n?[]:[n];}
+    else T.cols[i]=cur.includes(n)?cur.filter(v=>v!==n):cur.concat(n);
+  }else if(g==='box'){T.box=T.box.includes(n)?T.box.filter(v=>v!==n):T.box.concat(n);}
+  else if(g==='axis'){
+    if(T.axis.includes(n))T.axis=T.axis.filter(v=>v!==n);
+    else{T.axis=T.axis.concat(n);if(T.axis.length>T.axisN)T.axis=T.axis.slice(-T.axisN);}
+    T.partners=T.partners.filter(v=>!T.axis.includes(v));
+  }else if(g==='partners'){
+    if(T.axis.includes(n))return;
+    T.partners=T.partners.includes(n)?T.partners.filter(v=>v!==n):T.partners.concat(n);
+  }
+}
+function saveTicket(){
+  const m=TT[T.type];const {n}=enumTicket(T);
+  if(n<1){toast('馬番を選んで、点数が1以上になるようにしてください');return;}
+  if(T.method==='ながし'&&T.axis.length!==T.axisN){toast(`軸を${T.axisN}頭選んでください`);return;}
+  if(T.result==='hit'&&!(+T.payout>0)){toast('的中の払戻金を入力してください');return;}
+  const tk=finalizeTicket(Object.assign({},T,{id:T.id||uid()}));
+  if(tk.result==='refund'&&!tk.payout)tk.payout=tk.cost;
+  delete tk._idx;delete tk.odds;
+  if(T._idx==null)F.tickets.push(tk);else F.tickets[T._idx]=tk;
+  hideLayer('layer2');renderForm();
+}
+
+/* ================= 重賞ピッカー ================= */
+let PK={q:'',g:'all'};
+function openPicker(){PK={q:'',g:'all'};showLayer('layer2');renderPicker(true);}
+function renderPicker(scroll){
+  const L=$('#layer2');const q=normName(PK.q),t=todayStr();
+  let rs=allRaces().filter(r=>(PK.g==='all'||r.grade===PK.g||(PK.g==='J'&&r.grade.startsWith('J・')))&&(!q||normName(r.name+r.track).includes(q)));
+  let html='',cur='',target=null;
+  for(const r of rs){
+    const mo=r.date.slice(0,7);if(mo!==cur){cur=mo;html+=`<div class="dayh">${mo.replace('-','年')}月</div>`;}
+    const isT=!target&&r.date>=t;if(isT)target=r;
+    html+=`<button class="pick-r" ${isT?'id="pkTarget"':''} data-act="pickDo" data-d="${r.date}" data-n="${esc(r.name)}"><span class="dt">${mdw(r.date)}</span><span class="nm">${esc(r.name)}<span class="sb">${esc(r.track)} ${esc(r.dist)}</span></span>${gradeBadge(r.grade)}</button>`;
+  }
+  L.innerHTML=`<div class="sheet-head"><button data-act="closeL2">閉じる</button><b>重賞を選ぶ</b><span style="width:56px"></span></div>
+  <div class="sheet-body"><input class="search" id="pkq" data-act-input="pkq" placeholder="レース名で検索" value="${esc(PK.q)}">
+   <div class="seg">${[['all','すべて'],['G1','G1'],['G2','G2'],['G3','G3'],['J','障害']].map(([k,l])=>`<button data-act="pkg" data-v="${k}" class="${PK.g===k?'on':''}">${l}</button>`).join('')}</div>
+   ${html||'<div class="empty">該当する重賞がありません</div>'}</div>`;
+  if(scroll){const el=$('#pkTarget');if(el)el.scrollIntoView({block:'start'});}
+}
+function applyRace(r,toForm){
+  F.date=r.date;F.track=r.track;F.name=r.name;F.grade=r.grade;F.dist=r.dist;
+}
+
+/* ================= 読み取り(OCR) ================= */
+let tessPromise=null;
+function loadTess(){
+  if(window.Tesseract)return Promise.resolve();
+  if(tessPromise)return tessPromise;
+  tessPromise=new Promise((res,rej)=>{const s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js';s.onload=res;s.onerror=()=>{tessPromise=null;rej(new Error('load'));};document.head.appendChild(s);});
+  return tessPromise;
+}
+async function runOCR(file,onProg){
+  await loadTess();
+  const cv=await fileToCanvas(file,1800);
+  const w=await Tesseract.createWorker('jpn+eng',1,{logger:m=>{if(m.status==='recognizing text')onProg(m.progress);}});
+  try{const {data}=await w.recognize(cv);return data.text||'';}finally{try{await w.terminate();}catch(e){}}
+}
+function openScan(mode){
+  SC={mode,text:'',busy:false,prog:0,msg:'',parsed:null};
+  showLayer('layer2');renderScan();
+}
+function renderScan(){
+  const L=$('#layer2');const sc=$('.sheet-body',L);const st=sc?sc.scrollTop:0;
+  const card=SC.mode==='card';
+  let prev='';
+  if(SC.parsed){
+    if(card){
+      const hs=SC.parsed.horses;
+      prev=`<div class="card"><h3>読み取り結果</h3>
+        ${hs.length?`<div class="sl" style="margin-top:0">出走馬 ${hs.length}頭</div><div class="chips">${hs.map(h=>`<span class="chip nm" style="min-width:0"><b>${h.no}</b><i>${esc(h.name)}</i></span>`).join('')}</div>`:'<div class="note">出走馬を認識できませんでした。下の文字を直すか、貼り付けテキストをお試しください。</div>'}
+        ${metaLine(SC.parsed.meta)}</div>`;
+    }else{
+      const ts=SC.parsed.tickets;
+      prev=`<div class="card"><h3>読み取り結果</h3>
+        ${ts.length?ts.map(t=>`<div class="tk"><div class="l"><b>${esc(t.label)}</b><span>${t.points}点 × ${fmtYen(t.unit)} = ${fmtYen(t.cost)}${t.result==='hit'?' / 払戻 '+fmtYen(t.payout):''}</span></div></div>`).join(''):'<div class="note">馬券を認識できませんでした。券種名(馬連・三連複など)を含む文字が必要です。</div>'}
+        ${metaLine(SC.parsed.meta)}
+        <div class="note">反映後に、馬券を1件ずつ開いて内容を確認・修正してください。</div></div>`;
+    }
+  }
+  L.innerHTML=`<div class="sheet-head"><button data-act="closeL2">閉じる</button><b>${card?'出馬表を読み取る':'馬券を読み取る'}</b>
+    <button class="primary" data-act="scanApply" ${SC.parsed&&(card?SC.parsed.horses.length||Object.keys(SC.parsed.meta).length:SC.parsed.tickets.length)?'':'disabled style="opacity:.4"'}>反映</button></div>
+  <div class="sheet-body">
+   <div class="card">
+    <button class="btn fill" data-act="scanPhoto" ${SC.busy?'disabled':''}>写真を選ぶ / 撮影する</button>
+    ${SC.busy?`<div class="prog"><i style="width:${Math.round(SC.prog*100)}%"></i></div><div class="note">${esc(SC.msg)}</div>`:(SC.msg?`<div class="note">${esc(SC.msg)}</div>`:'')}
+    <div class="note">${card?'JRAの出馬表の画面、または紙の出馬表を撮影してください。':'紙の馬券、またはネット投票の購入履歴・投票内容の画面(スクリーンショット)に対応しています。'}
+    文字の読み取りは端末内のブラウザで行います(初回のみ言語データをダウンロード)。</div>
+   </div>
+   <div class="card"><h3>読み取った文字 / 貼り付け</h3>
+    <textarea id="scText" style="min-height:120px" placeholder="${card?'JRAのサイトの出馬表をコピーして、ここに貼り付けても取り込めます':'ここに文字を貼り付けても取り込めます'}">${esc(SC.text)}</textarea>
+    <button class="btn" data-act="scanParse" style="margin-top:8px">この文字を解析する</button>
+    <div class="note">OCRの誤読は、ここで直してから「解析する」を押すと反映されます。</div></div>
+   ${prev}
+  </div>`;
+  const nb=$('.sheet-body',L);if(nb)nb.scrollTop=st;
+}
+function metaLine(m){
+  const bits=[];if(m.name)bits.push(esc(m.name));if(m.date)bits.push(m.date.replace(/-/g,'/'));if(m.track)bits.push(esc(m.track));if(m.raceNo)bits.push(m.raceNo+'R');if(m.dist)bits.push(esc(m.dist));if(m.grade)bits.push(esc(m.grade));
+  return bits.length?`<div class="sl">レース情報: ${bits.join(' / ')}</div>`:'';
+}
+function scanParseNow(){
+  const text=($('#scText')||{}).value||SC.text;SC.text=text;
+  SC.parsed=SC.mode==='card'?parseRaceCard(text):parseTickets(text);
+  renderScan();
+}
+async function scanPhoto(){
+  pickFile('image/*',async f=>{
+    SC.busy=true;SC.prog=0;SC.msg='文字を読み取っています…(数十秒かかることがあります)';renderScan();
+    try{
+      const text=await runOCR(f,p=>{SC.prog=p;const b=$('.prog i');if(b)b.style.width=Math.round(p*100)+'%';});
+      SC.text=text;SC.busy=false;SC.msg=text.trim()?'読み取り完了。内容を確認してください。':'文字を認識できませんでした。明るい場所で、文字が大きく写るように撮り直してください。';
+      SC.parsed=SC.mode==='card'?parseRaceCard(text):parseTickets(text);
+    }catch(e){SC.busy=false;SC.msg='読み取りに失敗しました。ネット接続を確認するか、文字を貼り付けて解析してください。';}
+    renderScan();
+  });
+}
+function scanApply(){
+  const p=SC.parsed;if(!p)return;
+  const m=p.meta||{};
+  if(SC.mode==='card'){
+    F.horses=p.horses;
+    if(m.date)F.date=m.date;if(m.track)F.track=m.track;if(m.name)F.name=m.name;if(m.grade)F.grade=m.grade;if(m.dist)F.dist=m.dist;if(m.raceNo)F.raceNo=m.raceNo;
+  }else{
+    for(const t of p.tickets){t.id=uid();F.tickets.push(t);}
+    if(m.date&&F._isNew&&!F.name)F.date=m.date;
+    if(m.track&&!F.name)F.track=m.track;
+    if(m.raceNo&&!F.raceNo)F.raceNo=m.raceNo;
+    if(m.name&&!F.name){F.name=m.name;F.grade=m.grade||F.grade;F.dist=m.dist||F.dist;}
+  }
+  hideLayer('layer2');renderForm();toast('反映しました');
+}
+
+/* ================= 保存・削除 ================= */
+function saveForm(){
+  if(!F.date){toast('日付を入力してください');return;}
+  if(!F.track){toast('競馬場を選んでください');return;}
+  const rec=JSON.parse(JSON.stringify(F));delete rec._isNew;
+  rec.raceNo=rec.raceNo?parseInt(rec.raceNo,10)||'':'';
+  if(!rec.id){rec.id=uid();rec.created=Date.now();S.records.push(rec);}
+  else{const i=S.records.findIndex(r=>r.id===rec.id);if(i>=0)S.records[i]=rec;else S.records.push(rec);}
+  save();hideLayer('layer');F=null;
+  UI.calSel=rec.date;const d=parseYmd(rec.date);UI.calY=d.getFullYear();UI.calM=d.getMonth()+1;
+  render();toast('保存しました');
+}
+async function deleteRecord(){
+  if(!confirm('この記録を削除しますか?'))return;
+  const rec=S.records.find(r=>r.id===F.id);
+  if(rec)for(const id of rec.photoIds||[]){try{await IDB.del(id);}catch(e){}}
+  S.records=S.records.filter(r=>r.id!==F.id);save();hideLayer('layer');F=null;render();toast('削除しました');
+}
+
+/* ================= バックアップ ================= */
+function download(name,blob){const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},1500);}
+const blobToDataURL=b=>new Promise(r=>{const fr=new FileReader();fr.onload=()=>r(fr.result);fr.readAsDataURL(b);});
+async function exportJson(withPhotos){
+  const out={app:'keibaTecho',version:1,exportedAt:new Date().toISOString(),data:S};
+  if(withPhotos){
+    out.photos={};
+    for(const r of S.records)for(const id of r.photoIds||[]){try{const b=await IDB.get(id);if(b)out.photos[id]=await blobToDataURL(b);}catch(e){}}
+  }
+  download(`keiba-techo-${todayStr()}.json`,new Blob([JSON.stringify(out)],{type:'application/json'}));
+  toast('書き出しました');
+}
+function importJson(){
+  pickFile('.json,application/json',async f=>{
+    try{
+      const j=JSON.parse(await f.text());const d=j.data||j;
+      if(!Array.isArray(d.records))throw new Error('bad');
+      if(!confirm(`${d.records.length}件の記録を読み込みます。同じ記録は上書きされます。よろしいですか?`))return;
+      const map=new Map(S.records.map(r=>[r.id,r]));d.records.forEach(r=>map.set(r.id,r));S.records=[...map.values()];
+      const cr=new Map((S.customRaces||[]).map(r=>[r.date+r.name,r]));(d.customRaces||[]).forEach(r=>cr.set(r.date+r.name,r));S.customRaces=[...cr.values()];
+      if(d.settings)S.settings=Object.assign({},S.settings,d.settings);
+      if(j.photos)for(const [id,url] of Object.entries(j.photos)){try{const b=await (await fetch(url)).blob();await IDB.put(id,b);}catch(e){}}
+      save();render();toast('読み込みました');
+    }catch(e){toast('読み込めませんでした(ファイルを確認してください)');}
+  });
+}
+function exportCsv(){
+  const rows=[['日付','競馬場','R','レース名','グレード','券種','買い方','買い目','点数','1点金額','購入額','結果','払戻金','収支']];
+  const q=v=>{v=String(v==null?'':v);return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v;};
+  const rs=S.records.slice().sort((a,b)=>a.date<b.date?-1:1);
+  for(const r of rs)for(const t of r.tickets||[]){
+    const res={pending:'結果待ち',hit:'的中',miss:'ハズレ',refund:'返還'}[t.result];
+    rows.push([r.date,r.track,r.raceNo,r.name,r.grade,t.type,t.method,t.label,t.points,t.unit,t.cost,res,t.payout,settled(t)?(t.payout||0)-(t.cost||0):'']);
+  }
+  download(`keiba-techo-${todayStr()}.csv`,new Blob(['\ufeff'+rows.map(r=>r.map(q).join(',')).join('\n')],{type:'text/csv;charset=utf-8'}));
+}
+
+/* ================= イベント ================= */
+function openNew(preset){openForm(null,preset);}
+function actions(act,d,el){
+  switch(act){
+    case 'tab':UI.tab=d.v;render();window.scrollTo(0,0);break;
+    case 'new':openNew();break;
+    case 'newOn':openNew({date:d.d});break;
+    case 'newRace':{const r=allRaces().find(x=>x.date===d.d&&x.name===d.n);openNew(r?{date:r.date,track:r.track,name:r.name,grade:r.grade,dist:r.dist}:{date:d.d});break;}
+    case 'edit':{const r=S.records.find(x=>x.id===d.id);if(r)openForm(r);break;}
+    case 'calPrev':UI.calM--;if(UI.calM<1){UI.calM=12;UI.calY--;}render();break;
+    case 'calNext':UI.calM++;if(UI.calM>12){UI.calM=1;UI.calY++;}render();break;
+    case 'calSel':UI.calSel=d.d;render();break;
+    case 'statMode':UI.stat.mode=d.v;render();break;
+    case 'statPrev':if(UI.stat.mode==='month'){UI.stat.m--;if(UI.stat.m<1){UI.stat.m=12;UI.stat.y--;}}else UI.stat.y--;render();break;
+    case 'statNext':if(UI.stat.mode==='month'){UI.stat.m++;if(UI.stat.m>12){UI.stat.m=1;UI.stat.y++;}}else UI.stat.y++;render();break;
+    // form
+    case 'closeForm':if(confirm('入力中の内容は保存されません。閉じますか?')){hideLayer('layer');F=null;}break;
+    case 'saveForm':saveForm();break;
+    case 'delRecord':deleteRecord();break;
+    case 'pickRace':openPicker();break;
+    case 'pickDo':{const r=allRaces().find(x=>x.date===d.d&&x.name===d.n);if(r){applyRace(r);hideLayer('layer2');renderForm();}break;}
+    case 'pkg':PK.g=d.v;renderPicker(false);break;
+    case 'closeL2':hideLayer('layer2');if(F)renderForm();break;
+    case 'addTicket':openTicket(null);break;
+    case 'editTicket':openTicket(+d.i);break;
+    case 'delTicket':F.tickets.splice(+d.i,1);renderForm();break;
+    case 'addPhoto':pickFile('image/*',async f=>{try{const c=await fileToCanvas(f,1280);const b=await toBlob(c,.72);const id='p'+uid();await IDB.put(id,b);F.photoIds.push(id);renderForm();}catch(e){toast('写真を保存できませんでした');}});break;
+    case 'delPhoto':{F.photoIds=F.photoIds.filter(x=>x!==d.id);IDB.del(d.id).catch(()=>{});renderForm();break;}
+    // ticket
+    case 'closeTicket':hideLayer('layer2');T=null;break;
+    case 'saveTicket':saveTicket();break;
+    case 'tkType':{const first=T.method;T.type=d.v;resetSel();if(!methodsFor(T.type).includes(T.method))T.method=methodsFor(T.type)[0];renderTicket();break;}
+    case 'tkMethod':T.method=d.v;resetSel();renderTicket();break;
+    case 'tkPick':tkPick(d.g,+d.n);renderTicket();break;
+    case 'axisN':T.axisN=+d.v;T.axis=T.axis.slice(-T.axisN);T.axisPos='multi';renderTicket();break;
+    case 'axisPos':T.axisPos=d.v;renderTicket();break;
+    case 'unitUp':T.unit=(+T.unit||100)+100;renderTicket();break;
+    case 'unitDn':T.unit=Math.max(100,(+T.unit||100)-100);renderTicket();break;
+    case 'tkResult':T.result=d.v;if(T.result==='miss')T.payout=0;renderTicket();break;
+    // scan
+    case 'scanCard':openScan('card');break;
+    case 'scanTicket':openScan('ticket');break;
+    case 'scanPhoto':scanPhoto();break;
+    case 'scanParse':scanParseNow();break;
+    case 'scanApply':scanApply();break;
+    // settings
+    case 'exportJson':exportJson(false);break;
+    case 'exportJsonPhoto':exportJson(true);break;
+    case 'importJson':importJson();break;
+    case 'exportCsv':exportCsv();break;
+    case 'addCustom':{
+      const date=$('#crDate').value,name=$('#crName').value.trim();
+      if(!date||!name){toast('日付とレース名を入力してください');break;}
+      const track=$('#crTrack').value;
+      S.customRaces.push({date,grade:$('#crGrade').value,name,track,dist:$('#crDist').value.trim(),kind:'JRA',custom:true});
+      save();render();toast('追加しました');break;}
+    case 'delCustom':S.customRaces.splice(+d.i,1);save();render();break;
+    case 'delCustomAll':if(confirm('取り込み・追加した重賞をすべて削除します(記録は消えません)。よろしいですか?')){S.customRaces=[];save();render();}break;
+    case 'siParse':siParse();break;
+    case 'siApply':siApply();break;
+    case 'siFile':siFile();break;
+    case 'siToggle':SI.sel[+d.i]=!SI.sel[+d.i];render();break;
+    case 'wipe':if(confirm('すべての記録を削除します。元に戻せません。よろしいですか?')&&confirm('本当に削除しますか?(先にバックアップをおすすめします)')){S.records=[];save();render();toast('削除しました');}break;
+  }
+}
+document.addEventListener('click',e=>{
+  const el=e.target.closest('[data-act]');if(!el)return;
+  if(el.disabled)return;
+  actions(el.dataset.act,el.dataset,el);
+});
+function onField(e){
+  const t=e.target;
+  if(t.dataset.f&&F){F[t.dataset.f]=t.value;if(t.dataset.f==='track'){}return;}
+  if(t.dataset.tf&&T){
+    const k=t.dataset.tf;
+    if(k==='unit'){T.unit=+t.value||100;if(e.type==='change')renderTicket();else refreshCost();}
+    else if(k==='manualPoints'){T.manualPoints=+t.value||0;refreshCost();}
+    else if(k==='odds'){T.odds=t.value;const {n}=enumTicket(T);const unit=Math.max(100,+T.unit||100);const pay=Math.floor((+t.value||0)*unit/10)*10;T.payout=pay;const p=$('#tkPay');if(p)p.value=pay||'';}
+    else T[k]=t.value;
+    return;
+  }
+  const ai=t.dataset.actInput;
+  if(ai==='listQ'){UI.listQ=t.value;const pos=t.selectionStart;render();const el=$('[data-act-input="listQ"]');if(el){el.focus();try{el.setSelectionRange(pos,pos);}catch(_){}}}
+  else if(ai==='siText'){SI.text=t.value;}
+  else if(ai==='siYear'){SI.year=t.value;}
+  else if(ai==='pkq'){PK.q=t.value;const pos=t.selectionStart;renderPicker(false);const el=$('#pkq');if(el){el.focus();try{el.setSelectionRange(pos,pos);}catch(_){}}}
+}
+function refreshCost(){const {n}=enumTicket(T);const unit=Math.max(100,+T.unit||100);const c=$('#tkCost');if(c)c.textContent='購入額 '+fmtYen(n*unit);}
+document.addEventListener('input',onField);
+document.addEventListener('change',onField);
+
+/* ================= 起動 ================= */
+load();
+render();
+if('serviceWorker' in navigator&&/^https?:/.test(location.protocol)){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));}
+</script>
+</body>
+</html>
